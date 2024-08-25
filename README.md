@@ -4,12 +4,14 @@
 
 # Building a Half-Life server and setting it up
 
-First you need to build **hl.so** or **hl.dll**, depending on your platform, from source [hlsdk-portable branch hlbridge](https://github.com/Elinsrc/hlsdk-portable/tree/hlbridge/)]
+First you need to build **hl.so** or **hl.dll**, depending on your platform, from source [hlsdk-portable branch hlbridge](https://github.com/Elinsrc/hlsdk-portable/tree/hlbridge/)
 
 After building **hl.so** or **hl.dll**, move it to valve/dlls and replace the files.
 
 After that you need to edit **server.cfg** and add commands.
+
 **Attention**, specify a different argument in **connectionless_args** and **rcon_password**, do not write the same as in the example.
+
 Example:
 ```
 allow_connectionless 1
@@ -30,6 +32,7 @@ Also create a bot via [@BotFather](https://t.me/botfather)
 Create Telegram api id and hash, you can find out how to do this on the Internet.
 
 Configure config.env
+
 Example:
 ```
 API_ID = your_api_id
@@ -54,6 +57,7 @@ CONNECTIONLESS_ARGS = chatsendmsg
 ```
 
 # Running a bot
+
 Example:
 ```
 python3 hlbridge.py

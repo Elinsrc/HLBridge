@@ -96,11 +96,6 @@ class HLRcon:
                     rcon.append(line.decode(errors='ignore'))
         return rcon
 
-    def hlserver_rcon_say(self):
-        message = b"\xFF\xFF\xFF\xFFrcon %b say %b" % (self.rcon_passwd.encode(), self.rcon_cmd.encode())
-        self.rcon_sock.sendto(message, (self.ip, self.port))
-
-
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind(('0.0.0.0', log_port))
 
@@ -158,7 +153,6 @@ async def send_to_hl(client, message):
 
 @app.on_message(filters.command("rcon") & filters.user(owner))
 async def rcon(client, message):
-
     if len(message.command) == 1:
         await message.reply_text("/rcon [command]")
     try:
