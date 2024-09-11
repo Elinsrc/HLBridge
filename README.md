@@ -16,7 +16,6 @@ Example:
 ```
 allow_connectionless 1
 connectionless_args "chatsendmsg"
-log on
 logaddress 127.0.0.1 27000
 rcon_password YOUR_PASSWORD
 ```
@@ -61,4 +60,11 @@ CONNECTIONLESS_ARGS = chatsendmsg
 Example:
 ```
 python3 hlbridge.py
+```
+
+**Attention**, if you use Xash3D FWGS 0.19.x you need to add the **--oldengine** parameter
+
+Example:
+```
+python3 hlbridge.py --oldengine
 ```

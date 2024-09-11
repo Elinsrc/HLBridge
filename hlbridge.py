@@ -1,23 +1,79 @@
 import asyncio
 import re
 import socket
+import sys
 import threading
-from pyrogram import Client, filters, idle
-from os import environ
+import argparse
 import dotenv
+from os import environ
+from datetime import datetime
+from pyrogram import Client, filters, idle
+
+parser = argparse.ArgumentParser(description="HLBridge is a bot that forwards player messages from Telegram to the Half-life server on the Xash3D FWGS Engine and vice versa. GitHub: https://github.com/Elinsrc/HLBridge")
+parser.add_argument("--oldengine", action='store_true', help="enable read old engine log")
+args = parser.parse_args()
 
 dotenv.load_dotenv("config.env", override=True)
 
-api_id = environ.get("API_ID")
-api_hash = environ.get("API_HASH")
-bot_token = environ.get("BOT_TOKEN")
-chat_id = int(environ.get("CHAT_ID"))
-owner = int(environ.get("OWNER"))
-log_port = int(environ.get("LOG_PORT"))
-ip = environ.get("SERVER_IP")
-port = int(environ.get("SERVER_PORT"))
-rcon_passwd = environ.get("RCON_PASSWD")
-connectionless_args = environ.get("CONNECTIONLESS_ARGS")
+if API_ID := environ.get("API_ID"):
+    api_id = API_ID
+else:
+    print("\033[31mAPI_ID variable is missing! Exiting now\033[0m\n")
+    sys.exit(1)
+
+if API_HASH := environ.get("API_HASH"):
+    api_hash = API_HASH
+else:
+    print("\033[31mAPI_HASH variable is missing! Exiting now\033[0m\n")
+    sys.exit(1)
+
+if BOT_TOKEN := environ.get("BOT_TOKEN"):
+    bot_token = BOT_TOKEN
+else:
+    print("\033[BOT_TOKEN variable is missing! Exiting now\033[0m\n")
+    sys.exit(1)
+
+if CHAT_ID := environ.get("CHAT_ID"):
+    chat_id = int(CHAT_ID)
+else:
+    print("\033[CHAT_ID variable is missing! Exiting now\033[0m\n")
+    sys.exit(1)
+
+if OWNER := environ.get("OWNER"):
+    owner = int(OWNER)
+else:
+    print("\033[OWNER variable is missing! Exiting now\033[0m\n")
+    sys.exit(1)
+
+if LOG_PORT := environ.get("LOG_PORT"):
+    log_port = int(LOG_PORT)
+else:
+    print("\033[LOG_PORT variable is missing! Exiting now\033[0m\n")
+    sys.exit(1)
+
+if SERVER_IP := environ.get("SERVER_IP"):
+    ip = SERVER_IP
+else:
+    print("\033[SERVER_IP variable is missing! Exiting now\033[0m\n")
+    sys.exit(1)
+
+if SERVER_PORT := environ.get("SERVER_PORT"):
+    port = int(SERVER_PORT)
+else:
+    print("\033[SERVER_PORT variable is missing! Exiting now\033[0m\n")
+    sys.exit(1)
+
+if RCON_PASSWD := environ.get("RCON_PASSWD"):
+    rcon_passwd = RCON_PASSWD
+else:
+    print("\033[RCON_PASSWD variable is missing! Exiting now\033[0m\n")
+    sys.exit(1)
+
+if CONNECTIONLESS_ARGS := environ.get("CONNECTIONLESS_ARGS"):
+    connectionless_args = CONNECTIONLESS_ARGS
+else:
+    print("\033[CONNECTIONLESS_ARGS variable is missing! Exiting now\033[0m\n")
+    sys.exit(1)
 
 class HLServer:
     def __init__(self, ip, port):
@@ -96,27 +152,50 @@ class HLRcon:
                     rcon.append(line.decode(errors='ignore'))
         return rcon
 
+class Utils:
+    @staticmethod
+    def get_current_time():
+        return datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+
+    @staticmethod
+    def remove_color_tags(text):
+        return re.sub(r'\^\d', '', text)
+
+    @staticmethod
+    def user_msg(message):
+        return ' '.join(message.text.split(' ')[1:])
+
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind(('0.0.0.0', log_port))
 
-app = Client("HL_Bridge", api_id, api_hash, bot_token)
+app = Client("HLBridge", api_id, api_hash, bot_token)
 
-saymatch = re.compile(r'log L \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" say "(.*)"')
-entermatch = re.compile(r'log L \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" entered the game')
-disconnectmatch = re.compile(r'log L \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" disconnected')
-suicidematch = re.compile(r'log L \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" committed suicide with "(.*)"')
-waskilledmatch = re.compile(r'log L \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" committed suicide with "(.*)" \(.*\)')
-killedmatch = re.compile(r'log L \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" killed "(.*)<\d+><(.*)><\d+>" with "(.*)"')
-kickmatch = re.compile(r'log L \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: Kick: "(.*)<\d+><(.*)><>" was kicked by "(.*)" \(message "(.*)"\)')
-changematch = re.compile(r'log L \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" changed name to "(.*)"')
-colorsub = re.compile(r'\^\d')
+if args.oldengine:
+    saymatch = re.compile(r'log L \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" say "(.*)"')
+    entermatch = re.compile(r'log L \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" entered the game')
+    disconnectmatch = re.compile(r'log L \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" disconnected')
+    suicidematch = re.compile(r'log L \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" committed suicide with "(.*)"')
+    waskilledmatch = re.compile(r'log L \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" committed suicide with "(.*)" \(.*\)')
+    killedmatch = re.compile(r'log L \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" killed "(.*)<\d+><(.*)><\d+>" with "(.*)"')
+    kickmatch = re.compile(r'log L \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: Kick: "(.*)<\d+><(.*)><>" was kicked by "(.*)" \(message "(.*)"\)')
+    changematch = re.compile(r'log L \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" changed name to "(.*)"')
+else:
+    saymatch = re.compile(r'log \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" say "(.*)"')
+    entermatch = re.compile(r'log \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" entered the game')
+    disconnectmatch = re.compile(r'log \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" disconnected')
+    suicidematch = re.compile(r'log \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" committed suicide with "(.*)"')
+    waskilledmatch = re.compile(r'log \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" committed suicide with "(.*)" \(.*\)')
+    killedmatch = re.compile(r'log \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" killed "(.*)<\d+><(.*)><\d+>" with "(.*)"')
+    kickmatch = re.compile(r'log \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: Kick: "(.*)<\d+><(.*)><>" was kicked by "(.*)" \(message "(.*)"\)')
+    changematch = re.compile(r'log \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" changed name to "(.*)"')
 
 def send_to_telegram():
+    print(f"\033[32m[{Utils.get_current_time()}] Half-Life: <<< Socket started! >>>\033[0m")
     while True:
         try:
             l, _ = sock.recvfrom(1024)
             l = l[4:].decode(errors='replace').replace('\n', '')
-            l = colorsub.sub('', l)
+            l = Utils.remove_color_tags(l)
 
             matches = [
                 (saymatch, lambda g: f'{g[0]}: {g[2]}'),
@@ -135,31 +214,30 @@ def send_to_telegram():
                     g = m.groups()
                     text = formatter(g)
                     app.send_message(chat_id, text)
+                    print(f"\033[37m[{Utils.get_current_time()}] Half-Life: <<< {text} >>>\033[0m")
                     break
         except Exception as e:
+            print(f"\033[31m[{Utils.get_current_time()}] ERROR: <<< {e} >>>\033[0m")
             app.send_message(chat_id, e)
+            sock.close()
+            sys.exit(1)
 
-def remove_color_tags(text):
-    return re.sub(r'\^\d', '', text)
-
-def user_msg(message):
-    return ' '.join(message.text.split(' ')[1:])
-
-@app.on_message(filters.chat(chat_id) & ~filters.command(["status","rcon"]))
+@app.on_message(filters.chat(chat_id) & ~filters.command(["status","rcon","id"]))
 async def send_to_hl(client, message):
     msg = f"(telegram) {message.from_user.username}: {message.text}"
     query = b'\xff\xff\xff\xff%b %b\n' % (connectionless_args.encode(), msg.encode("utf8"))
     sock.sendto(query, (ip, port));
+    print(f"\033[37m[{Utils.get_current_time()}] Telegram: <<< {message.from_user.username}: {message.text} >>>")
 
 @app.on_message(filters.command("rcon") & filters.user(owner))
 async def rcon(client, message):
     if len(message.command) == 1:
         await message.reply_text("/rcon [command]")
     try:
-        rcon = HLRcon(ip, port, rcon_passwd, user_msg(message))
+        rcon = HLRcon(ip, port, rcon_passwd, Utils.user_msg(message))
         cmd = '\n'.join(rcon.hlserver_rcon())
         msg = f"```{cmd}```"
-        await message.reply_text(remove_color_tags(msg))
+        await message.reply_text(Utils.remove_color_tags(msg))
     except Exception as e:
         await message.reply_text(e)
 
@@ -170,11 +248,26 @@ async def status(client, message):
         server_info = '\n'.join(status.get_server_info())
         player_list = '\n'.join(status.get_player_list())
         msg = f"```{server_info}\nTime Frags Name\n\n{player_list}```"
-        await message.reply_text(remove_color_tags(msg))
+        await message.reply_text(Utils.remove_color_tags(msg))
     except Exception as e:
         await message.reply_text(e)
 
+@app.on_message(filters.command("id"))
+async def get_id(client, message):
+    try:
+        msg = f"```Name ID\n{message.from_user.username}: {message.from_user.id}\n{message.chat.title}: {message.chat.id}```"
+        await message.reply_text(msg)
+    except Exception as e:
+        await message.reply_text(e)
+
+def run_socket_listener():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(send_to_telegram())
+
 if __name__ == "__main__":
-    threading.Thread(target=send_to_telegram).start()
-    app.run()
+    threading.Thread(target=run_socket_listener, daemon=True).start()
+    app.start()
+    print(f"\033[32m[{Utils.get_current_time()}] Telegram: <<< Bot started! >>>\033[0m")
     idle()
+    print(f"\033[31m[{Utils.get_current_time()}] Telegram: <<< Bot stoped! >>>\033[0m")
