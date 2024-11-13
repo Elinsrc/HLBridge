@@ -9,71 +9,28 @@ from os import environ
 from datetime import datetime
 from pyrogram import Client, filters, idle
 
-parser = argparse.ArgumentParser(description="HLBridge is a bot that forwards player messages from Telegram to the Half-life server on the Xash3D FWGS Engine and vice versa. GitHub: https://github.com/Elinsrc/HLBridge")
+parser = argparse.ArgumentParser(description="HLBridge is a bot that forwards player messages from Telegram to the Half-Life server and vice versa.")
 parser.add_argument("--oldengine", action='store_true', help="enable read old engine log")
 args = parser.parse_args()
 
 dotenv.load_dotenv("config.env", override=True)
+REQUIRED_ENV_VARS = ['API_ID', 'API_HASH', 'BOT_TOKEN', 'CHAT_ID', 'OWNER', 'LOG_PORT', 'SERVER_IP', 'SERVER_PORT', 'RCON_PASSWD', 'CONNECTIONLESS_ARGS']
 
-if API_ID := environ.get("API_ID"):
-    api_id = API_ID
-else:
-    print("\033[31mAPI_ID variable is missing! Exiting now\033[0m\n")
-    sys.exit(1)
+for var in REQUIRED_ENV_VARS:
+    if var not in environ:
+        print("\033{var} variable is missing! Exiting now\033[0m\n")
+        sys.exit()
 
-if API_HASH := environ.get("API_HASH"):
-    api_hash = API_HASH
-else:
-    print("\033[31mAPI_HASH variable is missing! Exiting now\033[0m\n")
-    sys.exit(1)
-
-if BOT_TOKEN := environ.get("BOT_TOKEN"):
-    bot_token = BOT_TOKEN
-else:
-    print("\033[BOT_TOKEN variable is missing! Exiting now\033[0m\n")
-    sys.exit(1)
-
-if CHAT_ID := environ.get("CHAT_ID"):
-    chat_id = int(CHAT_ID)
-else:
-    print("\033[CHAT_ID variable is missing! Exiting now\033[0m\n")
-    sys.exit(1)
-
-if OWNER := environ.get("OWNER"):
-    owner = int(OWNER)
-else:
-    print("\033[OWNER variable is missing! Exiting now\033[0m\n")
-    sys.exit(1)
-
-if LOG_PORT := environ.get("LOG_PORT"):
-    log_port = int(LOG_PORT)
-else:
-    print("\033[LOG_PORT variable is missing! Exiting now\033[0m\n")
-    sys.exit(1)
-
-if SERVER_IP := environ.get("SERVER_IP"):
-    ip = SERVER_IP
-else:
-    print("\033[SERVER_IP variable is missing! Exiting now\033[0m\n")
-    sys.exit(1)
-
-if SERVER_PORT := environ.get("SERVER_PORT"):
-    port = int(SERVER_PORT)
-else:
-    print("\033[SERVER_PORT variable is missing! Exiting now\033[0m\n")
-    sys.exit(1)
-
-if RCON_PASSWD := environ.get("RCON_PASSWD"):
-    rcon_passwd = RCON_PASSWD
-else:
-    print("\033[RCON_PASSWD variable is missing! Exiting now\033[0m\n")
-    sys.exit(1)
-
-if CONNECTIONLESS_ARGS := environ.get("CONNECTIONLESS_ARGS"):
-    connectionless_args = CONNECTIONLESS_ARGS
-else:
-    print("\033[CONNECTIONLESS_ARGS variable is missing! Exiting now\033[0m\n")
-    sys.exit(1)
+api_id = int(environ["API_ID"])
+api_hash = environ["API_HASH"]
+bot_token = environ["BOT_TOKEN"]
+chat_id = int(environ["CHAT_ID"])
+owner = int(environ["OWNER"])
+log_port = int(environ["LOG_PORT"])
+ip = environ["SERVER_IP"]
+port = int(environ["SERVER_PORT"])
+rcon_passwd = environ["RCON_PASSWD"]
+connectionless_args = environ["CONNECTIONLESS_ARGS"]
 
 class HLServer:
     def __init__(self, ip, port):
@@ -215,7 +172,7 @@ def send_to_telegram():
             print(f"\033[31m[{Utils.get_current_time()}] ERROR: <<< {e} >>>\033[0m")
             app.send_message(chat_id, e)
             sock.close()
-            sys.exit(1)
+            break
 
 @app.on_message(filters.chat(chat_id) & ~filters.command(["status","rcon","id"]))
 async def send_to_hl(client, message):
@@ -255,14 +212,50 @@ async def get_id(client, message):
     except Exception as e:
         await message.reply_text(e)
 
-def run_socket_listener():
+def cmd_input():
+    print(f"\033[32m[{Utils.get_current_time()}] CmdInput: <<< Started! >>>\033[0m")
+    while True:
+        try:
+            CmdInput = input()
+
+            if CmdInput:
+                msg = f"{app.me.first_name}: {CmdInput}"
+                query = b'\xff\xff\xff\xff%b %b\n' % (connectionless_args.encode(), msg.encode("utf8"))
+                sock.sendto(query, (ip, port));
+                app.send_message(chat_id, CmdInput)
+                print(msg)
+        except Exception as e:
+            print(f"\033[31m[{Utils.get_current_time()}] ERROR: <<< {e} >>>\033[0m")
+            sock.close()
+            break
+
+def run_async_task(task):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    loop.run_until_complete(send_to_telegram())
+    try:
+        loop.run_until_complete(task())
+    except Exception as e:
+        print(f"\033[31m[{Utils.get_current_time()}] ERROR: <<< {e} >>>\033[0m")
+    finally:
+        loop.close()
+
+async def start_bot():
+    await app.start()
+    print(f"\033[32m[{Utils.get_current_time()}] Telegram: <<< Bot started! >>>\033[0m")
+    await idle()
+    print(f"\033[31m[{Utils.get_current_time()}] Telegram: <<< Bot stopped! >>>\033[0m")
+
 
 if __name__ == "__main__":
-    threading.Thread(target=run_socket_listener, daemon=True).start()
-    app.start()
-    print(f"\033[32m[{Utils.get_current_time()}] Telegram: <<< Bot started! >>>\033[0m")
-    idle()
-    print(f"\033[31m[{Utils.get_current_time()}] Telegram: <<< Bot stoped! >>>\033[0m")
+    threading.Thread(target=run_async_task, args=(send_to_telegram,), daemon=True).start()
+    threading.Thread(target=run_async_task, args=(cmd_input,), daemon=True).start()
+
+    loop = asyncio.get_event_loop()
+    try:
+        loop.run_until_complete(start_bot())
+    except Exception as e:
+        print(f"\033[31m[{Utils.get_current_time()}] ERROR: <<< {e} >>>\033[0m")
+    finally:
+        app.stop()
+        sock.close()
+        print("\nPress enter to finish!")
