@@ -19,7 +19,7 @@ REQUIRED_ENV_VARS = ['API_ID', 'API_HASH', 'BOT_TOKEN', 'CHAT_ID', 'OWNER', 'LOG
 for var in REQUIRED_ENV_VARS:
     if var not in environ:
         print("\033{var} variable is missing! Exiting now\033[0m\n")
-        sys.exit()
+        sys.exit(1)
 
 api_id = int(environ["API_ID"])
 api_hash = environ["API_HASH"]
@@ -31,6 +31,19 @@ ip = environ["SERVER_IP"]
 port = int(environ["SERVER_PORT"])
 rcon_passwd = environ["RCON_PASSWD"]
 connectionless_args = environ["CONNECTIONLESS_ARGS"]
+
+class Utils:
+    @staticmethod
+    def get_current_time():
+        return datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+
+    @staticmethod
+    def remove_color_tags(text):
+        return re.sub(r'\^\d', '', text)
+
+    @staticmethod
+    def user_msg(message):
+        return ' '.join(message.text.split(' ')[1:])
 
 class HLServer:
     def __init__(self, ip, port):
@@ -109,19 +122,6 @@ class HLRcon:
                     rcon.append(line.decode(errors='ignore'))
         return rcon
 
-class Utils:
-    @staticmethod
-    def get_current_time():
-        return datetime.now().strftime("%d.%m.%Y %H:%M:%S")
-
-    @staticmethod
-    def remove_color_tags(text):
-        return re.sub(r'\^\d', '', text)
-
-    @staticmethod
-    def user_msg(message):
-        return ' '.join(message.text.split(' ')[1:])
-
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind(('0.0.0.0', log_port))
 
@@ -140,6 +140,8 @@ waskilledmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\
 killedmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" killed "(.*)<\d+><(.*)><\d+>" with "(.*)"')
 kickmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: Kick: "(.*)<\d+><(.*)><>" was kicked by "(.*)" \(message "(.*)"\)')
 changematch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" changed name to "(.*)"')
+startedmapmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: Started map "(.*?)"')
+connectedmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><>" connected, address "([^"]+)"')
 
 def send_to_telegram():
     print(f"\033[32m[{Utils.get_current_time()}] Half-Life: <<< Socket started! >>>\033[0m")
@@ -151,13 +153,15 @@ def send_to_telegram():
 
             matches = [
                 (saymatch, lambda g: f'{g[0]}: {g[2]}'),
-                (suicidematch, lambda g: f'"{g[0]}" committed suicide with {g[2]}'),
-                (waskilledmatch, lambda g: f'"{g[0]}" committed suicide with {g[2]}'),
-                (killedmatch, lambda g: f'"{g[0]}" killed {g[2]} with {g[4]}'),
-                (kickmatch, lambda g: f'Player {g[0]} was kicked with message: "{g[3]}"'),
+                (suicidematch, lambda g: f'"{g[0]}" committed suicide with "{g[2]}"'),
+                (waskilledmatch, lambda g: f'"{g[0]}" committed suicide with "{g[2]}"'),
+                (killedmatch, lambda g: f'"{g[0]}" killed "{g[2]}" with "{g[4]}"'),
+                (kickmatch, lambda g: f'Player "{g[0]}" was kicked with message: "{g[3]}"'),
                 (changematch, lambda g: f'Player "{g[0]}" changed name to: "{g[2]}"'),
                 (entermatch, lambda g: f'Player "{g[0]}" has joined the game'),
-                (disconnectmatch, lambda g: f'Player "{g[0]}" has left the game')
+                (disconnectmatch, lambda g: f'Player "{g[0]}" has left the game'),
+                (startedmapmatch, lambda g: f'Started map "{g[0]}"'),
+                (connectedmatch, lambda g: f'Player "{g[0]}" connected')
             ]
 
             for pattern, formatter in matches:
@@ -165,7 +169,7 @@ def send_to_telegram():
                 if m:
                     g = m.groups()
                     text = formatter(g)
-                    app.send_message(chat_id, text)
+                    app.send_message(chat_id, f"[{Utils.get_current_time()}] {text}")
                     print(f"\033[37m[{Utils.get_current_time()}] Half-Life: <<< {text} >>>\033[0m")
                     break
         except Exception as e:
@@ -219,11 +223,17 @@ def cmd_input():
             CmdInput = input()
 
             if CmdInput:
-                msg = f"{app.me.first_name}: {CmdInput}"
-                query = b'\xff\xff\xff\xff%b %b\n' % (connectionless_args.encode(), msg.encode("utf8"))
-                sock.sendto(query, (ip, port));
-                app.send_message(chat_id, CmdInput)
-                print(msg)
+                if CmdInput.startswith("rcon "):
+                    rcon_command = CmdInput[5:].strip()
+                    rcon = HLRcon(ip, port, rcon_passwd, rcon_command)
+                    cmd_output = f"\n[{Utils.get_current_time()}] ".join(rcon.hlserver_rcon())
+                    print(f"{Utils.remove_color_tags(cmd_output)}\n")
+                else:
+                    msg = f"{app.me.first_name}: {CmdInput}"
+                    query = b'\xff\xff\xff\xff%b %b\n' % (connectionless_args.encode(), msg.encode("utf8"))
+                    sock.sendto(query, (ip, port));
+                    app.send_message(chat_id, CmdInput)
+                    print(msg)
         except Exception as e:
             print(f"\033[31m[{Utils.get_current_time()}] ERROR: <<< {e} >>>\033[0m")
             sock.close()

@@ -1,6 +1,6 @@
 # Python Half-Life Bridge
 
-* **HLBridge** is a bot that forwards player messages from **Telegram** to the **Half-life** server on the **Xash3D FWGS Engine** and vice versa.
+* **HLBridge** is a bot that forwards player messages from **Telegram** to the **Half-life** server and vice versa.
 
 # Building a Half-Life server and setting it up
 
@@ -62,7 +62,7 @@ Example:
 python3 hlbridge.py
 ```
 
-**Attention**, if you use Xash3D FWGS 0.19.x you need to add the **--oldengine** parameter
+**Attention**, if you use **Xash3D FWGS 0.19.x** or **Goldsrc** you need to add the **--oldengine** parameter
 
 Example:
 ```
