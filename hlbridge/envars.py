@@ -4,7 +4,7 @@ import os
 from os import environ
 
 dotenv.load_dotenv("config.env", override=True)
-REQUIRED_ENV_VARS = ['API_ID', 'API_HASH', 'BOT_TOKEN', 'CHAT_ID', 'OWNER', 'LOG_PORT', 'SERVER_IP', 'SERVER_PORT', 'RCON_PASSWD', 'CONNECTIONLESS_ARGS']
+REQUIRED_ENV_VARS = ['API_ID', 'API_HASH', 'BOT_TOKEN', 'CHAT_ID', 'OWNER', 'LOG_PORT', 'SERVER_IP', 'SERVER_PORT', 'RCON_PASSWD', 'CONNECTIONLESS_ARGS', 'WORKERS']
 
 for var in REQUIRED_ENV_VARS:
     if var not in environ:
@@ -21,3 +21,4 @@ SERVER_IP = os.environ["SERVER_IP"]
 SERVER_PORT = int(os.environ["SERVER_PORT"])
 RCON_PASSWD = os.environ["RCON_PASSWD"]
 CONNECTIONLESS_ARGS = os.environ["CONNECTIONLESS_ARGS"]
+WORKERS = int(os.environ["WORKERS"])
