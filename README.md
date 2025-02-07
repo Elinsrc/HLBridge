@@ -22,11 +22,9 @@ rcon_password YOUR_PASSWORD
 
 At this stage we have finished setting up the **Half-Life Server**, you can start the server.
 
-# Installation and configuration of Telegram bot
+# configuration of Telegram bot
 
-Install the required libraries in requirements.txt
-
-Also create a bot via [@BotFather](https://t.me/botfather)
+Create a bot via [@BotFather](https://t.me/botfather)
 
 Create Telegram api id and hash, you can find out how to do this on the Internet.
 
@@ -53,18 +51,30 @@ RCON_PASSWD = your_game_rcon_password
 
 # Your game connectionless_args
 CONNECTIONLESS_ARGS = chatsendmsg
+
+# Don't touch it
+WORKERS = 24
 ```
 
-# Running a bot
+
+# Create venv and install requirements
+
+```
+python3 -m venv .venv
+source .venv/bin/activate
+pip3 install -r requirements.txt
+```
+
+# Running a HLBridge
 
 Example:
 ```
-python3 hlbridge.py
+python3 -m hlbridge
 ```
 
 **Attention**, if you use **Xash3D FWGS 0.19.x** or **Goldsrc** you need to add the **--oldengine** parameter
 
 Example:
 ```
-python3 hlbridge.py --oldengine
+python3 -m hlbridge --oldengine
 ```
