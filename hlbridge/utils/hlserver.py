@@ -61,7 +61,7 @@ class HLServer:
         players = []
 
         for index, player_info in players_list.items():
-            players.append(f"{index} {Utils.remove_color_tags(player_info[0])} [{player_info[1]}] ({Utils.format_time(player_info[2])})\n")
+            players.append(f"{index} {Utils.remove_color_tags(player_info[0])} [{player_info[1]}] ({Utils.format_time(player_info[2])})")
 
         return players
 
