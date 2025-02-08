@@ -42,8 +42,7 @@ try:
 
     uvloop.install()
 except ImportError:
-    if platform.system() != "Windows":
-        logger.warning("uvloop is not installed and therefore will be disabled.")
+    logger.warning("uvloop is not installed and therefore will be disabled.")
 
 async def start_bot():
     hlbridge = HLBridge()
