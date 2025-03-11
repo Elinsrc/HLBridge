@@ -10,7 +10,7 @@ After building **hl.so** or **hl.dll**, move it to valve/dlls and replace the fi
 
 After that you need to edit **server.cfg** and add commands.
 
-**Attention**, specify a different argument in **connectionless_args** and **rcon_password**, do not write the same as in the example.
+**Attention**, specify a different argument in **connectionless_args**, do not write the same as in the example.
 
 Example:
 ```
@@ -18,7 +18,6 @@ log on
 logaddress 127.0.0.1 27000
 allow_connectionless 1
 connectionless_args "chatsendmsg"
-rcon_password YOUR_PASSWORD
 ```
 
 At this stage we have finished setting up the **Half-Life Server**, you can start the server.
@@ -47,7 +46,6 @@ example config.json:
             "ip": "127.0.0.1",
             "port": 27015,
             "log_port": 27000,
-            "rcon_passwd": "your_game_rcon_password",
             "connectionless_args": "chatsendmsg",
             "log_suicides": 0,
             "log_kills": 0
@@ -60,7 +58,6 @@ example config.json:
             "ip": "127.0.0.1",
             "port": 27016,
             "log_port": 27001,
-            "rcon_passwd": "your_game_rcon_password",
             "connectionless_args": "chatsendmsg",
             "log_suicides": 0,
             "log_kills": 0
@@ -73,7 +70,6 @@ example config.json:
             "ip": "127.0.0.1",
             "port": 27016,
             "log_port": 27002,
-            "rcon_passwd": "your_game_rcon_password",
             "connectionless_args": "chatsendmsg",
             "log_suicides": 0,
             "log_kills": 0
@@ -86,7 +82,6 @@ example config.json:
             "ip": "127.0.0.1",
             "port": 27017,
             "log_port": 27003,
-            "rcon_passwd": "your_game_rcon_password",
             "connectionless_args": "chatsendmsg",
             "log_suicides": 0,
             "log_kills": 0

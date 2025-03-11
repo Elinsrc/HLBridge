@@ -16,7 +16,6 @@ def parse_servers(servers):
                     'ip': server['ip'],
                     'port': int(server['port']),
                     'log_port': int(server['log_port']),
-                    'rcon_passwd': server['rcon_passwd'],
                     'connectionless_args': server['connectionless_args'],
                     'log_suicides': int(server['log_suicides']),
                     'log_kills': int(server['log_kills']),
