@@ -79,7 +79,7 @@ class HLBridge(Client):
         except BadRequest:
             logger.warning("Unable to send message to CHAT_ID.")
 
-    async def send_to_telegram(self, sock, log_prefix, chat_id, server_name):
+    async def send_to_telegram(self, sock, log_prefix, chat_id, server_name, log_suicides, log_kills ):
         while True:
                 l = await sock.receive()
                 l = l[4:].decode(errors='replace').replace('\n', '')
@@ -98,9 +98,9 @@ class HLBridge(Client):
 
                 matches = [
                     (saymatch, lambda g: f'{g[0]}: {g[2]}'),
-                    (suicidematch, lambda g: f'"{g[0]}" committed suicide with "{g[2]}"'),
-                    (waskilledmatch, lambda g: f'"{g[0]}" committed suicide with "{g[2]}"'),
-                    (killedmatch, lambda g: f'"{g[0]}" killed "{g[2]}" with "{g[4]}"'),
+                    (suicidematch, lambda g: f'"{g[0]}" committed suicide with "{g[2]}"' if log_suicides == 1 else None),
+                    (waskilledmatch, lambda g: f'"{g[0]}" committed suicide with "{g[2]}"' if log_suicides == 1 else None),
+                    (killedmatch, lambda g: f'"{g[0]}" killed "{g[2]}" with "{g[4]}"' if log_kills == 1 else None),
                     (kickmatch, lambda g: f'Player "{g[0]}" was kicked with message: "{g[3]}"'),
                     (changematch, lambda g: f'Player "{g[0]}" changed name to: "{g[2]}"'),
                     (entermatch, lambda g: f'Player "{g[0]}" has joined the game'),
@@ -114,8 +114,9 @@ class HLBridge(Client):
                     if m:
                         g = m.groups()
                         text = formatter(g)
-                        await self.send_message(chat_id=chat_id, text=text)
-                        print(f"[{Utils.get_current_time()}] [{server_name}] Half-Life: <<< {text} >>>")
+                        if text:  # Only send message if formatting function returned a valid text
+                            await self.send_message(chat_id=chat_id, text=text)
+                            print(f"[{Utils.get_current_time()}] [{server_name}] Half-Life: <<< {text} >>>")
 
 
     async def stop(self):

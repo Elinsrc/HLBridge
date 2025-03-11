@@ -18,6 +18,8 @@ def parse_servers(servers):
                     'log_port': int(server['log_port']),
                     'rcon_passwd': server['rcon_passwd'],
                     'connectionless_args': server['connectionless_args'],
+                    'log_suicides': int(server['log_suicides']),
+                    'log_kills': int(server['log_kills']),
                 })
             except (ValueError, TypeError) as e:
                 print(f"Error in config.json for {server['server_name']}: {e}")

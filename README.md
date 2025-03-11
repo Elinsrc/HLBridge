@@ -48,7 +48,9 @@ example config.json:
             "port": 27015,
             "log_port": 27000,
             "rcon_passwd": "your_game_rcon_password",
-            "connectionless_args": "chatsendmsg"
+            "connectionless_args": "chatsendmsg",
+            "log_suicides": 0,
+            "log_kills": 0
         },
         {
             "is_active": 0,
@@ -59,7 +61,9 @@ example config.json:
             "port": 27016,
             "log_port": 27001,
             "rcon_passwd": "your_game_rcon_password",
-            "connectionless_args": "chatsendmsg"
+            "connectionless_args": "chatsendmsg",
+            "log_suicides": 0,
+            "log_kills": 0
         },
         {
             "is_active": 0,
@@ -70,7 +74,9 @@ example config.json:
             "port": 27016,
             "log_port": 27002,
             "rcon_passwd": "your_game_rcon_password",
-            "connectionless_args": "chatsendmsg"
+            "connectionless_args": "chatsendmsg",
+            "log_suicides": 0,
+            "log_kills": 0
         },
         {
             "is_active": 0,
@@ -81,7 +87,9 @@ example config.json:
             "port": 27017,
             "log_port": 27003,
             "rcon_passwd": "your_game_rcon_password",
-            "connectionless_args": "chatsendmsg"
+            "connectionless_args": "chatsendmsg",
+            "log_suicides": 0,
+            "log_kills": 0
         }
     ],
     "api_id": 1234567890,
@@ -90,6 +98,7 @@ example config.json:
     "owner": 1234567890,
     "workers": 24
 }
+
 ```
 
 

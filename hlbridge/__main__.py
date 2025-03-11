@@ -43,7 +43,14 @@ async def start_bot():
             sock = Socket()
             await sock.connect(server['log_port'])
             log_prefix = "log L" if server['oldengine'] == 1 else "log"
-            sock_task = asyncio.create_task(hlbridge.send_to_telegram(sock, log_prefix, server['chat_id'], server['server_name']))
+            sock_task = asyncio.create_task(hlbridge.send_to_telegram(
+                sock,
+                log_prefix,
+                server['chat_id'],
+                server['server_name'],
+                server['log_suicides'],
+                server['log_kills']
+                ))
             sock_tasks.append((sock, sock_task))
 
         await idle()
