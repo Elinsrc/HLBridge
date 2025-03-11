@@ -70,7 +70,7 @@ class HLServer:
 
         data = await self.socket.send_packet(self.ip, self.port, message, self.timeout)
         data = data.decode(errors='replace')
-        data = "\\" + data.replace("'", ' ').replace('"', ' ').replace("'", ' ')
+        data = "\\" + data.replace("'", ' ').replace('"', ' ').replace("'", ' ').replace('\n', '')
         data = data.split("\\")[2:]
 
         server_info = []

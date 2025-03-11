@@ -7,4 +7,4 @@ ENV/
 env.bak/
 venv.bak/
 *.session*
-config.env
+config.json
