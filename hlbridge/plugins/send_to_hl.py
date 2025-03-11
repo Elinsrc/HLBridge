@@ -4,7 +4,7 @@ from hydrogram.types import Message
 from hlbridge.utils import Utils, Socket
 from hlbridge.config import SERVERS_CONFIG
 
-@Client.on_message(filters.text & ~filters.command(["status","id"]))
+@Client.on_message(filters.text & ~filters.command(["start","help","status","id"]))
 async def send_to_hl(c: Client, m: Message):
     sock = Socket()
     for server in SERVERS_CONFIG:
