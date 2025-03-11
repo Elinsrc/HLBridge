@@ -14,18 +14,12 @@ from .utils import (
     Socket
 )
 
-from .envars import (
+from .config import (
     API_ID,
     API_HASH,
     BOT_TOKEN,
-    CHAT_ID,
-    OWNER,
-    LOG_PORT,
-    SERVER_IP,
-    SERVER_PORT,
-    RCON_PASSWD,
-    CONNECTIONLESS_ARGS,
-    WORKERS
+    WORKERS,
+    SERVERS_CONFIG
 )
 
 from subprocess import run
@@ -80,47 +74,48 @@ class HLBridge(Client):
         )
 
         try:
-            await self.send_message(chat_id=CHAT_ID, text=start_message)
+            for server in SERVERS_CONFIG:
+                await self.send_message(chat_id=server['chat_id'], text=start_message)
         except BadRequest:
             logger.warning("Unable to send message to CHAT_ID.")
 
-    async def send_to_telegram(self, sock, log_prefix):
+    async def send_to_telegram(self, sock, log_prefix, chat_id, server_name):
         while True:
-            l = await sock.receive()
-            l = l[4:].decode(errors='replace').replace('\n', '')
-            l = Utils.remove_color_tags(l)
+                l = await sock.receive()
+                l = l[4:].decode(errors='replace').replace('\n', '')
+                l = Utils.remove_color_tags(l)
 
-            saymatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" say "(.*)"')
-            entermatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" entered the game')
-            disconnectmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" disconnected')
-            suicidematch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" committed suicide with "(.*)"')
-            waskilledmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" committed suicide with "(.*)" \(.*\)')
-            killedmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" killed "(.*)<\d+><(.*)><\d+>" with "(.*)"')
-            kickmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: Kick: "(.*)<\d+><(.*)><>" was kicked by "(.*)" \(message "(.*)"\)')
-            changematch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" changed name to "(.*)"')
-            startedmapmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: Started map "(.*?)"')
-            connectedmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><>" connected, address "([^"]+)"')
+                saymatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" say "(.*)"')
+                entermatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" entered the game')
+                disconnectmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" disconnected')
+                suicidematch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" committed suicide with "(.*)"')
+                waskilledmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" committed suicide with "(.*)" \(.*\)')
+                killedmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" killed "(.*)<\d+><(.*)><\d+>" with "(.*)"')
+                kickmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: Kick: "(.*)<\d+><(.*)><>" was kicked by "(.*)" \(message "(.*)"\)')
+                changematch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" changed name to "(.*)"')
+                startedmapmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: Started map "(.*?)"')
+                connectedmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><>" connected, address "([^"]+)"')
 
-            matches = [
-                (saymatch, lambda g: f'{g[0]}: {g[2]}'),
-                (suicidematch, lambda g: f'"{g[0]}" committed suicide with "{g[2]}"'),
-                (waskilledmatch, lambda g: f'"{g[0]}" committed suicide with "{g[2]}"'),
-                (killedmatch, lambda g: f'"{g[0]}" killed "{g[2]}" with "{g[4]}"'),
-                (kickmatch, lambda g: f'Player "{g[0]}" was kicked with message: "{g[3]}"'),
-                (changematch, lambda g: f'Player "{g[0]}" changed name to: "{g[2]}"'),
-                (entermatch, lambda g: f'Player "{g[0]}" has joined the game'),
-                (disconnectmatch, lambda g: f'Player "{g[0]}" has left the game'),
-                (startedmapmatch, lambda g: f'Started map "{g[0]}"'),
-                (connectedmatch, lambda g: f'Player "{g[0]}" connected')
-            ]
+                matches = [
+                    (saymatch, lambda g: f'{g[0]}: {g[2]}'),
+                    (suicidematch, lambda g: f'"{g[0]}" committed suicide with "{g[2]}"'),
+                    (waskilledmatch, lambda g: f'"{g[0]}" committed suicide with "{g[2]}"'),
+                    (killedmatch, lambda g: f'"{g[0]}" killed "{g[2]}" with "{g[4]}"'),
+                    (kickmatch, lambda g: f'Player "{g[0]}" was kicked with message: "{g[3]}"'),
+                    (changematch, lambda g: f'Player "{g[0]}" changed name to: "{g[2]}"'),
+                    (entermatch, lambda g: f'Player "{g[0]}" has joined the game'),
+                    (disconnectmatch, lambda g: f'Player "{g[0]}" has left the game'),
+                    (startedmapmatch, lambda g: f'Started map "{g[0]}"'),
+                    (connectedmatch, lambda g: f'Player "{g[0]}" connected')
+                ]
 
-            for pattern, formatter in matches:
-                m = pattern.match(l)
-                if m:
-                    g = m.groups()
-                    text = formatter(g)
-                    await self.send_message(chat_id=CHAT_ID, text=text)
-                    print(f"[{Utils.get_current_time()}] Half-Life: <<< {text} >>>")
+                for pattern, formatter in matches:
+                    m = pattern.match(l)
+                    if m:
+                        g = m.groups()
+                        text = formatter(g)
+                        await self.send_message(chat_id=chat_id, text=text)
+                        print(f"[{Utils.get_current_time()}] [{server_name}] Half-Life: <<< {text} >>>")
 
 
     async def stop(self):

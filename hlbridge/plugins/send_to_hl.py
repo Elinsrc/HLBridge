@@ -2,17 +2,19 @@ from hydrogram import Client, filters
 from hydrogram.types import Message
 
 from hlbridge.utils import Utils, Socket
-from hlbridge.envars import (
-    CHAT_ID,
-    SERVER_IP,
-    SERVER_PORT,
-    CONNECTIONLESS_ARGS
-)
+from hlbridge.config import SERVERS_CONFIG
 
-@Client.on_message(filters.chat(CHAT_ID) & ~filters.command(["status","id"]))
+@Client.on_message(filters.text & ~filters.command(["status","id"]))
 async def send_to_hl(c: Client, m: Message):
     sock = Socket()
-    msg = f"(telegram) {m.from_user.username}: {m.text}"
-    query = b'\xff\xff\xff\xff%b %b\n' % (CONNECTIONLESS_ARGS.encode(), msg.encode("utf8"))
-    await sock.send_msg(SERVER_IP, SERVER_PORT, query)
-    print(f"[{Utils.get_current_time()}] Telegram: <<< {m.from_user.username}: {m.text} >>>")
+    for server in SERVERS_CONFIG:
+        if m.chat.id == server['chat_id']:
+            server_name = server["server_name"]
+            server_ip = server["ip"]
+            server_port = server["port"]
+            connectionless_args = server['connectionless_args']
+
+            msg = f"(telegram) {m.from_user.username}: {m.text}"
+            query = b'\xff\xff\xff\xff%b %b\n' % (connectionless_args.encode(), msg.encode("utf8"))
+            await sock.send_msg(server_ip, server_port, query)
+            print(f"[{Utils.get_current_time()}] [{server_name}] Telegram: <<< {m.from_user.username}: {m.text} >>>")

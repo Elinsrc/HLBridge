@@ -1,4 +1,3 @@
-python-dotenv
 hydrogram @ https://github.com/hydrogram/hydrogram/archive/dev.zip
 tgcrypto
 asyncio_dgram

@@ -2,7 +2,6 @@ import sys
 import asyncio
 import logging
 import platform
-import argparse
 
 from hydrogram import idle
 from hlbridge import HLBridge
@@ -13,18 +12,7 @@ from .utils import (
     Socket
 )
 
-from .envars import (
-    API_ID,
-    API_HASH,
-    BOT_TOKEN,
-    CHAT_ID,
-    OWNER,
-    LOG_PORT,
-    SERVER_IP,
-    SERVER_PORT,
-    RCON_PASSWD,
-    CONNECTIONLESS_ARGS
-)
+from .config import SERVERS_CONFIG
 
 logging.basicConfig(
     level=logging.INFO,
@@ -46,32 +34,40 @@ except ImportError:
 
 async def start_bot():
     hlbridge = HLBridge()
-    sock = Socket()
+    sock_tasks = []
 
     try:
-        await sock.connect(LOG_PORT)
         await hlbridge.start()
-        sock_task = asyncio.create_task(hlbridge.send_to_telegram(sock, log_prefix))
+
+        for server in SERVERS_CONFIG:
+            sock = Socket()
+            await sock.connect(server['log_port'])
+            log_prefix = "log L" if server['oldengine'] == 1 else "log"
+            sock_task = asyncio.create_task(hlbridge.send_to_telegram(sock, log_prefix, server['chat_id'], server['server_name']))
+            sock_tasks.append((sock, sock_task))
+
         await idle()
+
     except KeyboardInterrupt:
         logger.warning("Forced stop!")
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
     finally:
-        sock_task.cancel()
+        for sock, sock_task in sock_tasks:
+            sock_task.cancel()
+            try:
+                await sock_task
+            except asyncio.CancelledError:
+                pass
+            finally:
+                try:
+                    await sock.close()
+                except Exception as e:
+                    logger.error(f"Error closing socket: {e}")
+
         await hlbridge.stop()
-        await sock.close()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="HLBridge is a bot that forwards player messages from Telegram to the Half-Life server and vice versa.")
-    parser.add_argument("--oldengine", action='store_true', help="enable read old engine log")
-    args = parser.parse_args()
-
-    if args.oldengine:
-        protocol = 48
-        log_prefix = "log L"
-    else:
-        protocol = 49
-        log_prefix = "log"
-
     event_policy = asyncio.get_event_loop_policy()
     event_loop = event_policy.new_event_loop()
     asyncio.set_event_loop(event_loop)
