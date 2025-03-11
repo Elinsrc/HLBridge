@@ -53,7 +53,7 @@ async def server_info(c: Client, query: CallbackQuery):
     await query.answer()
 
 @Client.on_message(filters.command(["start","help"]))
-async def get_id(c: Client, m: Message):
+async def get_help(c: Client, m: Message):
     msg = "/id - shows the chat_id and user_id\n"
     msg += "/status - shows players and their statistics"
     await m.reply_text(msg)
