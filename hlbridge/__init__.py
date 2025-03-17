@@ -77,7 +77,7 @@ class HLBridge(Client):
             for server in SERVERS_CONFIG:
                 await self.send_message(chat_id=server['chat_id'], text=start_message)
         except BadRequest:
-            logger.warning("Unable to send message to CHAT_ID.")
+            logger.warning(f"Unable to send message, check if <chat_id: {server['chat_id']}> is correct ")
 
     async def send_to_telegram(self, sock, log_prefix, chat_id, server_name, log_suicides, log_kills ):
         while True:
@@ -115,7 +115,7 @@ class HLBridge(Client):
                         g = m.groups()
                         text = formatter(g)
                         if text:  # Only send message if formatting function returned a valid text
-                            await self.send_message(chat_id=chat_id, text=text)
+                            await self.send_message(chat_id=chat_id, text=text, disable_web_page_preview=True, disable_notification=True)
                             print(f"[{Utils.get_current_time()}] [{server_name}] Half-Life: <<< {text} >>>")
 
 
