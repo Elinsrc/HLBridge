@@ -1,14 +1,14 @@
 # Python Half-Life Bridge
 
-* **HLBridge** is a bot that forwards player messages from **Telegram** to the **Half-life** server and vice versa.
+* **HLBridge** is a bot that forwards player messages from **Telegram** to the **Half-life** or **CS16** servers and vice versa.
 
 # Building a Half-Life server and setting it up
 
 First you need to build metamod plugin, depending on your platform, from source [HLBridge_metamod](https://github.com/Half-Life-Collective/HLBridge_metamod)
 
-After building **hlbridge_mm_i386.so** or **hlbridge_mm_i386.dll**, move it to valve/dlls/addons/metamod and replace the files.
+After building **hlbridge_mm_i386.so** or **hlbridge_mm_i386.dll**, move it to <gamedir>/dlls/addons/metamod
 
-After that you need to edit valve/dlls/addons/metamod/plugins.ini and enable **hlbridge_mm_i386.so** or **hlbridge_mm_i386.dll**.
+After that you need to edit <gamedir>/dlls/addons/metamod/plugins.ini and enable **hlbridge_mm_i386.so** or **hlbridge_mm_i386.dll**.
 
 After that you need to edit **server.cfg** and add commands.
 
@@ -22,7 +22,7 @@ allow_connectionless 1
 connectionless_args "chatsendmsg"
 ```
 
-At this stage we have finished setting up the **Half-Life Server**, you can start the server.
+At this stage we have finished setting up the **Server**, you can start the server.
 
 # configuration of Telegram bot
 
