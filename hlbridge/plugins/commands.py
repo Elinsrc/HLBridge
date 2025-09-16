@@ -9,7 +9,7 @@ from hydrogram.types import (
 from hydrogram.enums import ParseMode
 
 from hlbridge.utils import Utils, HLServer
-from hlbridge.config import SERVERS_CONFIG
+from hlbridge.config import SERVERS
 
 @Client.on_message(filters.command("id"))
 async def get_id(c: Client, m: Message):
@@ -23,7 +23,7 @@ async def get_id(c: Client, m: Message):
 async def status(c: Client, m: Message):
     keyboard = []
 
-    for server in SERVERS_CONFIG:
+    for server in SERVERS:
         protocol = 48 if server['oldengine'] == 1 else 49
 
         button = InlineKeyboardButton(

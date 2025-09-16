@@ -12,12 +12,12 @@ from .utils import (
     Socket
 )
 
-from .config import SERVERS_CONFIG
+from .config import SERVERS
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(name)s.%(funcName)s | %(levelname)s | %(message)s",
-    datefmt="[%X]",
+    format="[%(asctime)s] [%(levelname)s] %(name)s.%(funcName)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
 )
 
 logging.getLogger("hydrogram.syncer").setLevel(logging.WARNING)
@@ -30,7 +30,8 @@ try:
 
     uvloop.install()
 except ImportError:
-    logger.warning("uvloop is not installed and therefore will be disabled.")
+    if platform.system() != "Windows":
+        logger.warning("uvloop is not installed and therefore will be disabled.")
 
 async def start_bot():
     hlbridge = HLBridge()
@@ -39,7 +40,7 @@ async def start_bot():
     try:
         await hlbridge.start()
 
-        for server in SERVERS_CONFIG:
+        for server in SERVERS:
             sock = Socket()
             await sock.connect(server['log_port'])
             log_prefix = "log L" if server['oldengine'] == 1 else "log"

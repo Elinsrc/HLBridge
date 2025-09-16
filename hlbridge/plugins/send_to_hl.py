@@ -2,12 +2,12 @@ from hydrogram import Client, filters
 from hydrogram.types import Message
 
 from hlbridge.utils import Utils, Socket
-from hlbridge.config import SERVERS_CONFIG
+from hlbridge.config import SERVERS
 
 @Client.on_message(filters.text & ~filters.command(["start","help","status","id"]))
 async def send_to_hl(c: Client, m: Message):
     sock = Socket()
-    for server in SERVERS_CONFIG:
+    for server in SERVERS:
         if m.chat.id == server['chat_id']:
             server_name = server["server_name"]
             server_ip = server["ip"]

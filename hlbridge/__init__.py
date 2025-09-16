@@ -19,7 +19,7 @@ from .config import (
     API_HASH,
     BOT_TOKEN,
     WORKERS,
-    SERVERS_CONFIG
+    SERVERS
 )
 
 from subprocess import run
@@ -74,7 +74,7 @@ class HLBridge(Client):
         )
 
         try:
-            for server in SERVERS_CONFIG:
+            for server in SERVERS:
                 await self.send_message(chat_id=server['chat_id'], text=start_message)
         except BadRequest:
             logger.warning(f"Unable to send message, check if <chat_id: {server['chat_id']}> is correct ")
@@ -85,16 +85,16 @@ class HLBridge(Client):
                 l = l[4:].decode(errors='replace').replace('\n', '')
                 l = Utils.remove_color_tags(l)
 
-                saymatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" say "(.*)"')
-                entermatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" entered the game')
-                disconnectmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" disconnected')
-                suicidematch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" committed suicide with "(.*)"')
-                waskilledmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" committed suicide with "(.*)" \(.*\)')
-                killedmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" killed "(.*)<\d+><(.*)><\d+>" with "(.*)"')
-                kickmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: Kick: "(.*)<\d+><(.*)><>" was kicked by "(.*)" \(message "(.*)"\)')
-                changematch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><\d+>" changed name to "(.*)"')
+                saymatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<[^>]+><(.*)><[^>]+>" say "(.*)"')
+                entermatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<[^>]+><(.*)><[^>]+>" entered the game')
+                disconnectmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<[^>]+><(.*)><[^>]+>" disconnected')
+                suicidematch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<[^>]+><(.*)><[^>]+>" committed suicide with "(.*)"')
+                waskilledmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<[^>]+><(.*)><[^>]+>" committed suicide with "(.*)" \(.*\)')
+                killedmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<[^>]+><(.*)><[^>]+>" killed "(.*)<[^>]+><(.*)><[^>]+>" with "(.*)"')
+                kickmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: Kick: "(.*)<[^>]+><(.*)><>" was kicked by "(.*)" \(message "(.*)"\)')
+                changematch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<[^>]+><(.*)><[^>]+>" changed name to "(.*)"')
                 startedmapmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: Started map "(.*?)"')
-                connectedmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<\d+><(.*)><>" connected, address "([^"]+)"')
+                connectedmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<[^>]+><(.*)><>" connected, address "([^"]+)"')
 
                 matches = [
                     (saymatch, lambda g: f'{g[0]}: {g[2]}'),
