@@ -1,11 +1,11 @@
 import re
 from datetime import datetime
+import logging
+from loguru import logger
+from subprocess import run
+
 
 class Utils:
-    @staticmethod
-    def get_current_time():
-        return datetime.now().strftime("%d.%m.%Y %H:%M:%S")
-
     @staticmethod
     def remove_color_tags(text):
         return re.sub(r'\^\d', '', text)
@@ -33,3 +33,32 @@ class Utils:
             time_components.append(f"{remaining_seconds}s")
 
         return ' '.join(time_components)
+
+
+class InterceptHandler(logging.Handler):
+    def emit(self, record):
+        try:
+            level = logger.level(record.levelname).name
+        except ValueError:
+            level = record.levelno
+        logger.opt(depth=6, exception=record.exc_info).log(level, record.getMessage())
+
+
+class GitInfo:
+    @staticmethod
+    def get_commit():
+        return (
+            run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, check=False)
+            .stdout.decode()
+            .strip()
+            or "None"
+        )
+
+    @staticmethod
+    def get_version_number():
+        return (
+            run(["git", "rev-list", "--count", "HEAD"], capture_output=True, check=False)
+            .stdout.decode()
+            .strip()
+            or "0"
+        )

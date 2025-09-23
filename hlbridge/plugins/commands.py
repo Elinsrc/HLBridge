@@ -1,3 +1,5 @@
+from loguru import logger
+
 from hydrogram import Client, filters
 from hydrogram.types import (
     CallbackQuery,
@@ -9,15 +11,22 @@ from hydrogram.types import (
 from hydrogram.enums import ParseMode
 
 from hlbridge.utils import Utils, HLServer
-from hlbridge.config import SERVERS
+from hlbridge.config import SERVERS, CHAT_ID
+
 
 @Client.on_message(filters.command("id"))
 async def get_id(c: Client, m: Message):
     try:
-        msg = f"```Name ID\n{m.from_user.username}: {m.from_user.id}\n{m.chat.title}: {m.chat.id}```"
+        chat_id = m.chat.id
+        username = m.from_user.username or m.from_user.first_name
+        topic_id = m.message_thread_id
+
+        msg = f"User: {username} ({m.from_user.id})\nChat: {m.chat.title} ({chat_id})\nTopic ID: {topic_id}"
         await m.reply_text(msg, parse_mode=ParseMode.MARKDOWN)
     except Exception as e:
+        logger.error(e)
         await m.reply_text(e)
+
 
 @Client.on_message(filters.command("status"))
 async def status(c: Client, m: Message):
@@ -36,6 +45,7 @@ async def status(c: Client, m: Message):
     reply_markup = InlineKeyboardMarkup(keyboard)
     await m.reply_text("Select server:", reply_markup=reply_markup)
 
+
 @Client.on_callback_query(filters.regex("^server_info"))
 async def server_info(c: Client, query: CallbackQuery):
     _, ip, port, protocol = query.data.split("|")
@@ -44,13 +54,13 @@ async def server_info(c: Client, query: CallbackQuery):
     server_info = '\n'.join(await status.get_server_info())
     player_list = '\n'.join(await status.get_players())
 
-    msg = f"```{server_info}"
+    msg = f"{server_info}"
     if player_list:
         msg += f"\n\n# Name [kills] (Time)\n{player_list}"
-    msg += "```"
 
     await query.message.edit_text(Utils.remove_color_tags(msg), parse_mode=ParseMode.MARKDOWN)
     await query.answer()
+
 
 @Client.on_message(filters.command(["start","help"]))
 async def get_help(c: Client, m: Message):

@@ -39,12 +39,18 @@ If "is_active": 0 then the server is ignored
 example config.json:
 ```
 {
+    "api_id": 1234567890,
+    "api_hash": "qwertyuiopasdfghjklzxcvbnm",
+    "bot_token": "1234567890:qwertyuiopasdfghjklzxcvbnm",
+    "owner": 1234567890,
+    "workers": 24,
+    "chat_id": -1234567890,
     "servers": [
         {
             "is_active": 1,
             "oldengine": 0,
-            "server_name": "server 1",
-            "chat_id": -1234567890,
+            "topic_id": 2,
+            "server_name": "Server 1",
             "ip": "127.0.0.1",
             "port": 27015,
             "log_port": 27000,
@@ -55,8 +61,8 @@ example config.json:
         {
             "is_active": 0,
             "oldengine": 0,
-            "server_name": "server 2",
-            "chat_id": -1234567890,
+            "topic_id": 3,
+            "server_name": "Server 2",
             "ip": "127.0.0.1",
             "port": 27016,
             "log_port": 27001,
@@ -67,20 +73,8 @@ example config.json:
         {
             "is_active": 0,
             "oldengine": 0,
+            "topic_id": 4,
             "server_name": "Server 3",
-            "chat_id": -1234567890,
-            "ip": "127.0.0.1",
-            "port": 27016,
-            "log_port": 27002,
-            "connectionless_args": "chatsendmsg",
-            "log_suicides": 0,
-            "log_kills": 0
-        },
-        {
-            "is_active": 0,
-            "oldengine": 0,
-            "server_name": "Server 4",
-            "chat_id": -1234567890,
             "ip": "127.0.0.1",
             "port": 27017,
             "log_port": 27003,
@@ -88,12 +82,7 @@ example config.json:
             "log_suicides": 0,
             "log_kills": 0
         }
-    ],
-    "api_id": 1234567890,
-    "api_hash": "qwertyuiopasdfghjklzxcvbnm",
-    "bot_token": "1234567890:qwertyuiopasdfghjklzxcvbnm",
-    "owner": 1234567890,
-    "workers": 24
+    ]
 }
 
 ```

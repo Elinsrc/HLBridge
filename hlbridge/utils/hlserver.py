@@ -3,6 +3,7 @@ import asyncio
 from .socket import Socket
 from .utils import Utils
 
+
 class HLServer:
     def __init__(self, ip, port, protocol, timeout):
         self.ip = ip

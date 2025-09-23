@@ -1,6 +1,7 @@
 import sys
 import asyncio
 import logging
+from loguru import logger
 import platform
 
 from hydrogram import idle
@@ -9,21 +10,30 @@ from hlbridge import HLBridge
 from .utils import (
     HLServer,
     Utils,
-    Socket
+    Socket,
+    InterceptHandler
 )
 
 from .config import SERVERS
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="[%(asctime)s] [%(levelname)s] %(name)s.%(funcName)s: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
-)
 
+logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
 logging.getLogger("hydrogram.syncer").setLevel(logging.WARNING)
 logging.getLogger("hydrogram.client").setLevel(logging.WARNING)
+logger.remove()
+logger.add(
+    sys.stdout,
+    format="[<green>{time:YYYY-MM-DD HH:mm:ss}</green>] "
+           "[<level>{level}</level>] "
+           "<white>{name}</white>.<white>{function}</white>: "
+           "<level>{message}</level>",
+    level="INFO",
+    colorize=True,
+)
+
 
 logger = logging.getLogger(__name__)
+
 
 try:
     import uvloop
@@ -32,6 +42,7 @@ try:
 except ImportError:
     if platform.system() != "Windows":
         logger.warning("uvloop is not installed and therefore will be disabled.")
+
 
 async def start_bot():
     hlbridge = HLBridge()
@@ -47,7 +58,7 @@ async def start_bot():
             sock_task = asyncio.create_task(hlbridge.send_to_telegram(
                 sock,
                 log_prefix,
-                server['chat_id'],
+                server['topic_id'],
                 server['server_name'],
                 server['log_suicides'],
                 server['log_kills']
@@ -74,6 +85,7 @@ async def start_bot():
                     logger.error(f"Error closing socket: {e}")
 
         await hlbridge.stop()
+
 
 if __name__ == "__main__":
     event_policy = asyncio.get_event_loop_policy()

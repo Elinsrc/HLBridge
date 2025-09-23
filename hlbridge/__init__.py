@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 import time
 import re
 
@@ -11,7 +11,8 @@ from hydrogram.raw.all import layer
 from .utils import (
     HLServer,
     Utils,
-    Socket
+    Socket,
+    GitInfo
 )
 
 from .config import (
@@ -19,26 +20,10 @@ from .config import (
     API_HASH,
     BOT_TOKEN,
     WORKERS,
+    CHAT_ID,
     SERVERS
 )
 
-from subprocess import run
-
-__commit__ = (
-    run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, check=False)
-    .stdout.decode()
-    .strip()
-    or "None"
-)
-
-__version_number__ = (
-    run(["git", "rev-list", "--count", "HEAD"], capture_output=True, check=False)
-    .stdout.decode()
-    .strip()
-    or "0"
-)
-
-logger = logging.getLogger(__name__)
 
 class HLBridge(Client):
     def __init__(self):
@@ -60,26 +45,21 @@ class HLBridge(Client):
 
         self.start_time = time.time()
 
-        logger.info(
-            "HLBridge running with Hydrogram v%s (Layer %s) started on @%s.",
-            hydrogram.__version__,
-            layer,
-            self.me.username,
-        )
+        logger.info(f"HLBridge running with Hydrogram v{hydrogram.__version__} (Layer {layer}) started on @{self.me.username}.")
 
         start_message = (
             "<b>HLBridge started!</b>\n\n"
-            f"<b>Version number:</b> <code>r{__version_number__} ({__commit__})</code>\n"
+            f"<b>Version number:</b> <code>r{GitInfo.get_version_number()} ({GitInfo.get_commit()})</code>\n"
             f"<b>Hydrogram:</b> <code>v{hydrogram.__version__}</code>"
         )
 
         try:
             for server in SERVERS:
-                await self.send_message(chat_id=server['chat_id'], text=start_message)
+                await self.send_message(chat_id=CHAT_ID, text=start_message)
         except BadRequest:
-            logger.warning(f"Unable to send message, check if <chat_id: {server['chat_id']}> is correct ")
+            logger.warning(f"Unable to send message, check if <chat_id: {CHAT_ID}> is correct ")
 
-    async def send_to_telegram(self, sock, log_prefix, chat_id, server_name, log_suicides, log_kills ):
+    async def send_to_telegram(self, sock, log_prefix, topic_id, server_name, log_suicides, log_kills ):
         while True:
                 l = await sock.receive()
                 l = l[4:].decode(errors='replace').replace('\n', '')
@@ -115,9 +95,8 @@ class HLBridge(Client):
                         g = m.groups()
                         text = formatter(g)
                         if text:  # Only send message if formatting function returned a valid text
-                            await self.send_message(chat_id=chat_id, text=text, disable_web_page_preview=True, disable_notification=True)
-                            print(f"[{Utils.get_current_time()}] [{server_name}] Half-Life: <<< {text} >>>")
-
+                            await self.send_message(chat_id=CHAT_ID, text=text, message_thread_id=topic_id, disable_web_page_preview=True, disable_notification=True)
+                            print(f"[{server_name}] Half-Life: <<< {text} >>>")
 
     async def stop(self):
         await super().stop()

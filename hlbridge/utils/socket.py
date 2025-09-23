@@ -1,10 +1,8 @@
 import asyncio
 import asyncio_dgram
 from typing import Union
+from loguru import logger
 
-import logging
-
-logger = logging.getLogger(__name__)
 
 class Socket:
     def __init__(self):
