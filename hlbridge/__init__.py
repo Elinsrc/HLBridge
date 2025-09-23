@@ -96,7 +96,7 @@ class HLBridge(Client):
                         text = formatter(g)
                         if text:  # Only send message if formatting function returned a valid text
                             await self.send_message(chat_id=CHAT_ID, text=text, message_thread_id=topic_id, disable_web_page_preview=True, disable_notification=True)
-                            print(f"[{server_name}] Half-Life: <<< {text} >>>")
+                            logger.info(f"[{server_name}] Half-Life: <<< {text} >>>")
 
     async def stop(self):
         await super().stop()
