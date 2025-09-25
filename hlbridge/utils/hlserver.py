@@ -1,12 +1,14 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 Elinsrc
+
 import re
 import asyncio
 from .socket import Socket
-from .utils import Utils
+from .utils import remove_color_tags, format_time
 
 
 class HLServer:
-    def __init__(self, ip, port, protocol, timeout):
-        self.ip = ip
+    def __init__(self, port, protocol, timeout):
         self.port = port
         self.protocol = protocol
         self.timeout = timeout
@@ -15,7 +17,7 @@ class HLServer:
     async def get_players(self):
         message = b'\xff\xff\xff\xff' + b'netinfo %b 0 3' % str(self.protocol).encode()
 
-        data = await self.socket.send_packet(self.ip, self.port, message, self.timeout)
+        data = await self.socket.send_packet(self.port, message, self.timeout)
 
         if not data:
             return {}
@@ -62,14 +64,14 @@ class HLServer:
         players = []
 
         for index, player_info in players_list.items():
-            players.append(f"{index} {Utils.remove_color_tags(player_info[0])} [{player_info[1]}] ({Utils.format_time(player_info[2])})")
+            players.append(f"{index} {remove_color_tags(player_info[0])} [{player_info[1]}] ({format_time(player_info[2])})")
 
         return players
 
     async def get_server_info(self):
         message = b'\xff\xff\xff\xff' + b'netinfo %b 0 4' % str(self.protocol).encode()
 
-        data = await self.socket.send_packet(self.ip, self.port, message, self.timeout)
+        data = await self.socket.send_packet(self.port, message, self.timeout)
         data = data.decode(errors='replace')
         data = "\\" + data.replace("'", ' ').replace('"', ' ').replace("'", ' ').replace('\n', '')
         data = data.split("\\")[2:]

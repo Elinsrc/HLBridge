@@ -3,3 +3,4 @@ tgcrypto
 asyncio_dgram
 uvloop
 loguru
+pyyaml

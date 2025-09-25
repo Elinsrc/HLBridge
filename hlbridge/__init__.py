@@ -1,6 +1,12 @@
-from loguru import logger
-import time
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 Elinsrc
+
+import asyncio
 import re
+import time
+from typing import Dict, List, Optional
+
+from loguru import logger
 
 import hydrogram
 from hydrogram import Client
@@ -9,19 +15,17 @@ from hydrogram.errors import BadRequest
 from hydrogram.raw.all import layer
 
 from .utils import (
-    HLServer,
-    Utils,
     Socket,
-    GitInfo
+    remove_color_tags,
+    get_version_number,
+    get_commit
 )
 
 from .config import (
     API_ID,
     API_HASH,
     BOT_TOKEN,
-    WORKERS,
-    CHAT_ID,
-    SERVERS
+    WORKERS
 )
 
 
@@ -39,31 +43,46 @@ class HLBridge(Client):
             plugins={"root": "hlbridge.plugins"},
             sleep_threshold=180,
         )
+        self.server_tasks: Dict[str, asyncio.Task] = {}
+        self.server_sockets: Dict[str, Socket] = {}
+        self.chat_id: Optional[int] = None
+        self.topic_id: Optional[int] = None
 
     async def start(self):
+        from .database.settings import get_settings
+        from .database.servers import get_servers
         await super().start()
 
         self.start_time = time.time()
 
         logger.info(f"HLBridge running with Hydrogram v{hydrogram.__version__} (Layer {layer}) started on @{self.me.username}.")
 
+        while True:
+            settings = await get_settings()
+            if settings and settings["chat_id"] and settings["topic_id"]:
+                self.chat_id = settings["chat_id"]
+                self.topic_id = settings["topic_id"]
+                break
+            logger.info("CHAT_ID and TOPIC_ID is not configured. Waiting for /setup")
+            await asyncio.sleep(5)
+
         start_message = (
             "<b>HLBridge started!</b>\n\n"
-            f"<b>Version number:</b> <code>r{GitInfo.get_version_number()} ({GitInfo.get_commit()})</code>\n"
+            f"<b>Version number:</b> <code>r{get_version_number()} ({get_commit()})</code>\n"
             f"<b>Hydrogram:</b> <code>v{hydrogram.__version__}</code>"
         )
 
-        try:
-            for server in SERVERS:
-                await self.send_message(chat_id=CHAT_ID, text=start_message)
-        except BadRequest:
-            logger.warning(f"Unable to send message, check if <chat_id: {CHAT_ID}> is correct ")
+        await self.send_message(chat_id=self.chat_id, text=start_message, message_thread_id=self.topic_id)
 
-    async def send_to_telegram(self, sock, log_prefix, topic_id, server_name, log_suicides, log_kills ):
+        servers = await get_servers(active_only=True)
+        for server in servers:
+            await self.start_server_monitoring(server)
+
+    async def send_to_telegram(self, sock: Socket, log_prefix: str, topic_id: int, server_name: str, log_suicides: int, log_kills: int):
         while True:
                 l = await sock.receive()
                 l = l[4:].decode(errors='replace').replace('\n', '')
-                l = Utils.remove_color_tags(l)
+                l = remove_color_tags(l)
 
                 saymatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<[^>]+><(.*)><[^>]+>" say "(.*)"')
                 entermatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<[^>]+><(.*)><[^>]+>" entered the game')
@@ -95,9 +114,55 @@ class HLBridge(Client):
                         g = m.groups()
                         text = formatter(g)
                         if text:  # Only send message if formatting function returned a valid text
-                            await self.send_message(chat_id=CHAT_ID, text=text, message_thread_id=topic_id, disable_web_page_preview=True, disable_notification=True)
-                            logger.info(f"[{server_name}] Half-Life: <<< {text} >>>")
+                            await self.send_message(chat_id=self.chat_id, text=text, message_thread_id=topic_id, disable_web_page_preview=True, disable_notification=True)
+                            logger.info(f"[{server_name}] <<< {text} >>>")
+
+    async def start_server_monitoring(self, server: Dict) -> bool:
+        server_name = server["server_name"]
+        if server_name in self.server_tasks:
+            await self.stop_server_monitoring(server_name)
+
+        sock = Socket()
+        await sock.connect(server["log_port"])
+        log_prefix = "log L" if server["oldengine"] == 1 else "log"
+
+        task = asyncio.create_task(self.send_to_telegram(sock, log_prefix, server["topic_id"], server_name, server["log_suicides"], server["log_kills"]))
+
+        self.server_tasks[server_name] = task
+        self.server_sockets[server_name] = sock
+        return True
+
+    async def stop_server_monitoring(self, server_name: str) -> bool:
+        if server_name in self.server_tasks:
+            task = self.server_tasks.pop(server_name)
+            task.cancel()
+
+        if server_name in self.server_sockets:
+            sock = self.server_sockets.pop(server_name)
+            await sock.close()
+
+        return True
+
+    async def restart_monitoring(self, servers: Optional[List[Dict]] = None):
+        if servers is None:
+            servers = await get_servers(active_only=True)
+
+        stopped_count = 0
+        started_count = 0
+
+        for name in list(self.server_tasks.keys()):
+            if await self.stop_server_monitoring(name):
+                stopped_count += 1
+
+        for server in servers:
+            if await self.start_server_monitoring(server):
+                started_count += 1
+
+        return stopped_count, started_count
+
 
     async def stop(self):
+        for name in list(self.server_tasks.keys()):
+            await self.stop_server_monitoring(name)
         await super().stop()
         logger.warning("HLBridge stopped!")

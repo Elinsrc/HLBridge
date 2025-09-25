@@ -1,0 +1,4 @@
+api_id: 1234567890
+api_hash: "qwertyuiopasdfghjklzxcvbnm",
+bot_token: "1234567890:qwertyuiopasdfghjklzxcvbnm"
+workers: 24

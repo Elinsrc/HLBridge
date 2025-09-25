@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 Elinsrc
+
 import sys
 import asyncio
 import logging
@@ -7,14 +10,13 @@ import platform
 from hydrogram import idle
 from hlbridge import HLBridge
 
+from .database import database
+
 from .utils import (
     HLServer,
-    Utils,
     Socket,
     InterceptHandler
 )
-
-from .config import SERVERS
 
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
@@ -44,47 +46,51 @@ except ImportError:
         logger.warning("uvloop is not installed and therefore will be disabled.")
 
 
+async def monitor_config_changes(hlbridge: HLBridge, interval: int = 1):
+    last_config_hash = None
+
+    while True:
+        try:
+            from .database.servers import get_servers
+            servers = await get_servers(active_only=True)
+
+            config_hash = hash(str(sorted([tuple(s.items()) for s in servers])))
+
+            if last_config_hash is None:
+                last_config_hash = config_hash
+            elif config_hash != last_config_hash:
+                logger.info("Server configuration changed. Reloading...")
+                stopped, started = await hlbridge.restart_monitoring(servers)
+                logger.info(f"Updated server monitoring: {started} servers started, {stopped} stopped")
+                last_config_hash = config_hash
+
+        except Exception as e:
+            logger.error(f"Error monitoring config changes: {e}")
+
+        await asyncio.sleep(interval)
+
+
 async def start_bot():
     hlbridge = HLBridge()
-    sock_tasks = []
-
     try:
+        await database.connect()
+
+        from .database.servers import get_servers
+        servers = await get_servers(active_only=True)
+
         await hlbridge.start()
 
-        for server in SERVERS:
-            sock = Socket()
-            await sock.connect(server['log_port'])
-            log_prefix = "log L" if server['oldengine'] == 1 else "log"
-            sock_task = asyncio.create_task(hlbridge.send_to_telegram(
-                sock,
-                log_prefix,
-                server['topic_id'],
-                server['server_name'],
-                server['log_suicides'],
-                server['log_kills']
-                ))
-            sock_tasks.append((sock, sock_task))
+        logger.info(f"Starting monitoring for {len(servers)} active servers...")
+        asyncio.create_task(monitor_config_changes(hlbridge))
 
         await idle()
 
     except KeyboardInterrupt:
         logger.warning("Forced stop!")
-    except Exception as e:
-        logger.error(f"An error occurred: {e}")
     finally:
-        for sock, sock_task in sock_tasks:
-            sock_task.cancel()
-            try:
-                await sock_task
-            except asyncio.CancelledError:
-                pass
-            finally:
-                try:
-                    await sock.close()
-                except Exception as e:
-                    logger.error(f"Error closing socket: {e}")
-
         await hlbridge.stop()
+        if database.is_connected:
+            await database.close()
 
 
 if __name__ == "__main__":
