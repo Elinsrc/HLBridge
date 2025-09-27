@@ -180,6 +180,12 @@ async def add_server_command(c: Client, m: Message, s: Strings):
             await m.reply(s("value_error"))
             return
 
+        servers_list = await get_servers()
+        for srv in servers_list:
+            if srv["topic_id"] == topic_id:
+                await m.reply(s("topic_id_already_used").format(topic_id=topic_id))
+                return
+
         server = {
             "server_name": args[0].strip(),
             "port": port,
@@ -243,6 +249,13 @@ async def update_server_command(c: Client, m: Message, s: Strings):
                         await m.reply(s("value_error"))
                         return
                 updates[key] = value
+
+        if "topic_id" in updates:
+            servers_list = await get_servers()
+            for srv in servers_list:
+                if srv["topic_id"] == updates["topic_id"] and srv["server_name"] != server_name:
+                    await m.reply(s("topic_id_already_used").format(topic_id=updates["topic_id"]))
+                    return
 
         if "port" in updates and not (1 <= updates["port"] <= 65535):
             await m.reply(s("invalid_port"))
