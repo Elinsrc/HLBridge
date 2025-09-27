@@ -12,11 +12,12 @@ After that you need to edit **gamedir**/dlls/addons/metamod/plugins.ini and enab
 
 After that you need to edit **server.cfg** and add commands.
 
-**Attention**, specify a different argument in **connectionless_args**, do not write the same as in the example.
+**Attention**, please specify different argument in **connectionless_args** and in **rcon_password**, do not write it the same as in the example.
 
 Example:
 ```
 logaddress 127.0.0.1 27000
+rcon_password "password"
 allow_connectionless 1
 connectionless_args "chatsendmsg"
 ```
@@ -31,7 +32,7 @@ Create Telegram api id and hash, you can find out how to do this on the Internet
 
 Configure config.yml
 
-example:
+Example:
 ```
 api_id: 1234567890
 api_hash: "qwertyuiopasdfghjklzxcvbnm",
@@ -61,7 +62,7 @@ After starting the bot, you need to invite it to a chat that has topics enabled.
 Then enter the command `/setup` in any topic.
 The bot will save the **chat_id** and **topic_id** to the database, and from now on, every time the bot starts, it will send a startup notification there.
 
-⚡ Important: the first time you use `/setup`, you will be set as the **owner** of the bot.
+* Important: the first time you use `/setup`, you will be set as the **owner** of the bot.
 
 Next, you need to use `/add_server` and follow the instructions to add your game servers.
 To get the full list of available commands, use `/help`.
