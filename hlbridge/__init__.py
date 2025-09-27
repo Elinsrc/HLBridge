@@ -123,7 +123,7 @@ class HLBridge(Client):
             await self.stop_server_monitoring(server_name)
 
         sock = Socket()
-        await sock.connect(server["log_port"])
+        await sock.connect("0.0.0.0", server["log_port"])
         log_prefix = "log L" if server["oldengine"] == 1 else "log"
 
         task = asyncio.create_task(self.send_to_telegram(sock, log_prefix, server["topic_id"], server_name, server["log_suicides"], server["log_kills"]))

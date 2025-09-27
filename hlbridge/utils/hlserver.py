@@ -3,12 +3,15 @@
 
 import re
 import asyncio
+import asyncio_dgram
+
 from .socket import Socket
 from .utils import remove_color_tags, format_time
 
 
 class HLServer:
-    def __init__(self, port, protocol, timeout):
+    def __init__(self, ip, port, protocol, timeout = 0.5):
+        self.ip = ip
         self.port = port
         self.protocol = protocol
         self.timeout = timeout
@@ -17,7 +20,7 @@ class HLServer:
     async def get_players(self):
         message = b'\xff\xff\xff\xff' + b'netinfo %b 0 3' % str(self.protocol).encode()
 
-        data = await self.socket.send_packet(self.port, message, self.timeout)
+        data = await self.socket.send_packet(self.ip, self.port, message, self.timeout)
 
         if not data:
             return {}
@@ -71,7 +74,7 @@ class HLServer:
     async def get_server_info(self):
         message = b'\xff\xff\xff\xff' + b'netinfo %b 0 4' % str(self.protocol).encode()
 
-        data = await self.socket.send_packet(self.port, message, self.timeout)
+        data = await self.socket.send_packet(self.ip, self.port, message, self.timeout)
         data = data.decode(errors='replace')
         data = "\\" + data.replace("'", ' ').replace('"', ' ').replace("'", ' ').replace('\n', '')
         data = data.split("\\")[2:]
@@ -80,3 +83,25 @@ class HLServer:
         server_info.append(f"Server: {data[1]}\nMap: {data[9]}({data[5]}/{data[7]})")
 
         return server_info
+
+
+    async def rcon(self, password: str, command: str) -> str:
+        message = b"\xFF\xFF\xFF\xFFrcon %b %b\x00" % (password.encode(), command.encode())
+
+        stream = await asyncio_dgram.connect((self.ip, self.port))
+        await stream.send(message)
+
+        responses = []
+        while True:
+            try:
+                data, _ = await asyncio.wait_for(stream.recv(), timeout=self.timeout)
+                if data.startswith(b"\xFF\xFF\xFF\xFF"):
+                    responses.append(data[4:].decode("utf-8", errors="ignore"))
+            except asyncio.TimeoutError:
+                break
+
+        stream.close()
+
+        result = "".join(responses)
+        cleaned = "\n".join(line for line in result.splitlines() if line.strip() != "print")
+        return cleaned

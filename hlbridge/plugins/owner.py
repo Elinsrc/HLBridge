@@ -145,6 +145,10 @@ async def safe_edit_message(query: CallbackQuery, text: str, reply_markup=None):
 @owner_only
 @use_chat_lang
 async def list_servers(c: Client, m: Message, s: Strings):
+    if m.chat.type != ChatType.PRIVATE:
+        await m.reply(s("only_private_chat"))
+        return
+
     servers_list = await get_servers()
     if not servers_list:
         await m.reply(s("no_servers"))
@@ -165,7 +169,7 @@ async def add_server_command(c: Client, m: Message, s: Strings):
     try:
         args = re.findall(r"\[([^\]]+)\]", m.text)
 
-        if len(args) != 8:
+        if len(args) != 9:
             await m.reply(s("add_server_usage"))
             return
 
@@ -174,8 +178,8 @@ async def add_server_command(c: Client, m: Message, s: Strings):
             log_port = int(args[2].strip())
             oldengine = int(args[3].strip())
             topic_id = int(args[4].strip())
-            log_suicides = int(args[6].strip())
-            log_kills = int(args[7].strip())
+            log_suicides = int(args[7].strip())
+            log_kills = int(args[8].strip())
         except ValueError:
             await m.reply(s("value_error"))
             return
@@ -193,6 +197,7 @@ async def add_server_command(c: Client, m: Message, s: Strings):
             "oldengine": oldengine,
             "topic_id": topic_id,
             "connectionless_args": args[5].strip(),
+            "rcon_password": args[6].strip(),
             "log_suicides": log_suicides,
             "log_kills": log_kills
         }
@@ -248,6 +253,7 @@ async def update_server_command(c: Client, m: Message, s: Strings):
                     except ValueError:
                         await m.reply(s("value_error"))
                         return
+
                 updates[key] = value
 
         if "topic_id" in updates:
@@ -274,7 +280,6 @@ async def update_server_command(c: Client, m: Message, s: Strings):
         await m.reply(f"{s('server_error')}: {str(e)}")
 
 
-
 @Client.on_callback_query(filters.regex("^manage_server"))
 @owner_only
 @use_chat_lang
@@ -293,8 +298,12 @@ async def manage_server(c: Client, q: CallbackQuery, s: Strings):
         f"{status_text}\n"
         f"port: {server['port']}\n"
         f"log_port: {server['log_port']}\n"
+        f"oldengine: {server['oldengine']}\n"
         f"topic_id: {server['topic_id']}\n"
-        f"oldengine: {'1' if server['oldengine'] else '0'}"
+        f"connectionless_args: {server['connectionless_args']}\n"
+        f"rcon_password: {server['rcon_password']}\n"
+        f"log_suicides: {server['log_suicides']}\n"
+        f"log_kills: {server['log_kills']}\n"
     )
 
     keyboard = InlineKeyboardMarkup([
