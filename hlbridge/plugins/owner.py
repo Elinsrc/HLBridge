@@ -12,7 +12,7 @@ from hydrogram.types import (
     InlineKeyboardMarkup,
     Message,
 )
-from hydrogram.enums import ParseMode
+from hydrogram.enums import ParseMode, ChatType
 from hydrogram.errors import MessageNotModified
 
 from hlbridge.database.settings import (
@@ -43,7 +43,7 @@ from hlbridge.utils.localization import Strings, use_chat_lang
 @Client.on_message(filters.command("setup"))
 @use_chat_lang
 async def setup_bot(c: Client, m: Message, s: Strings):
-    if m.chat.type == "private":
+    if m.chat.type == ChatType.PRIVATE:
         await m.reply(s("setup_private_chat"))
         return
 
@@ -158,6 +158,10 @@ async def list_servers(c: Client, m: Message, s: Strings):
 @owner_only
 @use_chat_lang
 async def add_server_command(c: Client, m: Message, s: Strings):
+    if m.chat.type != ChatType.PRIVATE:
+        await m.reply(s("only_private_chat"))
+        return
+
     try:
         args = re.findall(r"\[([^\]]+)\]", m.text)
 
@@ -208,6 +212,10 @@ async def add_server_command(c: Client, m: Message, s: Strings):
 @owner_only
 @use_chat_lang
 async def update_server_command(c: Client, m: Message, s: Strings):
+    if m.chat.type != ChatType.PRIVATE:
+        await m.reply(s("only_private_chat"))
+        return
+
     try:
         args = re.findall(r"\[([^\]]+)\]", m.text)
 
