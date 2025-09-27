@@ -55,6 +55,12 @@ class Database:
         CREATE TABLE IF NOT EXISTS admins(
             user_id INTEGER
         );
+
+        CREATE TABLE IF NOT EXISTS user_names(
+            user_id INTEGER PRIMARY KEY,
+            default_name TEXT,
+            custom_name TEXT
+        );
         """
         )
 
