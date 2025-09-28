@@ -42,8 +42,6 @@ class Database:
             topic_id INTEGER,
             connectionless_args TEXT,
             rcon_password TEXT,
-            log_suicides INTEGER DEFAULT 0,
-            log_kills INTEGER DEFAULT 0,
             is_active INTEGER DEFAULT 1
         );
 

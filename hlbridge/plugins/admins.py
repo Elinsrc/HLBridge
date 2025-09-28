@@ -3,7 +3,7 @@ import io
 
 from hydrogram import Client, filters
 from hydrogram.types import Message
-from hydrogram.enums import ParseMode, ChatType
+from hydrogram.enums import ChatType
 
 from hlbridge.database.user_names import set_user_name, get_user_name, remove_user_name, get_all_user_names
 from hlbridge.database.admins import user_admin
@@ -147,7 +147,7 @@ async def rcon_command(c: Client, m: Message, s: Strings):
         return
 
     if len(result) < 3500:
-        await m.reply(f"</code>{result}</code>", parse_mode=ParseMode.MARKDOWN)
+        await m.reply(f"<code>{result}</code>")
         return
 
     bio = io.BytesIO(result.encode('utf-8'))

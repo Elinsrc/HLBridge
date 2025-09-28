@@ -11,8 +11,8 @@ async def add_server(server: Dict) -> None:
         """
         INSERT INTO servers (
             server_name, port, log_port, oldengine, topic_id,
-            connectionless_args, rcon_password, log_suicides, log_kills
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            connectionless_args, rcon_password
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
         (
             server['server_name'],
@@ -21,9 +21,7 @@ async def add_server(server: Dict) -> None:
             server['oldengine'],
             server['topic_id'],
             server['connectionless_args'],
-            server['rcon_password'],
-            server['log_suicides'],
-            server['log_kills']
+            server['rcon_password']
         )
     )
     await conn.commit()

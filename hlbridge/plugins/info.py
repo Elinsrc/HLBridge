@@ -11,8 +11,6 @@ from hydrogram.types import (
     Message,
 )
 
-from hydrogram.enums import ParseMode
-
 from hlbridge.utils import HLServer, remove_color_tags, commands
 from hlbridge.utils.decorators import owner_only
 from hlbridge.utils.localization import Strings, use_chat_lang
@@ -29,7 +27,7 @@ async def get_id(c: Client, m: Message, s: Strings):
         topic_id = m.message_thread_id
 
         msg = f"User: {username} ({m.from_user.id})\nChat: {m.chat.title} ({chat_id})\nTopic ID: {topic_id}"
-        await m.reply_text(msg, parse_mode=ParseMode.MARKDOWN)
+        await m.reply_text(msg)
     except Exception as e:
         logger.error(e)
         await m.reply_text(e)
@@ -66,11 +64,12 @@ async def server_info(c: Client, m: CallbackQuery, s: Strings):
     server_info = '\n'.join(await status.get_server_info())
     player_list = '\n'.join(await status.get_players())
 
-    msg = f"{server_info}"
+    msg = f"<code>{server_info}"
     if player_list:
         msg += s("status_player_list_header").format(player_list=player_list)
+    msg += "</code>"
 
-    await m.message.edit_text(remove_color_tags(msg), parse_mode=ParseMode.MARKDOWN)
+    await m.message.edit_text(remove_color_tags(msg))
     await m.answer()
 
 

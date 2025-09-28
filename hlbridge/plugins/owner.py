@@ -12,7 +12,7 @@ from hydrogram.types import (
     InlineKeyboardMarkup,
     Message,
 )
-from hydrogram.enums import ParseMode, ChatType
+from hydrogram.enums import ChatType
 from hydrogram.errors import MessageNotModified
 
 from hlbridge.database.settings import (
@@ -136,7 +136,7 @@ def build_servers_keyboard(servers_list):
 
 async def safe_edit_message(query: CallbackQuery, text: str, reply_markup=None):
     try:
-        await query.message.edit_text(text, reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN)
+        await query.message.edit_text(text, reply_markup=reply_markup)
     except MessageNotModified:
         pass
 
@@ -155,7 +155,7 @@ async def list_servers(c: Client, m: Message, s: Strings):
         return
 
     keyboard = build_servers_keyboard(servers_list)
-    await m.reply(s("server_list_header"), reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN)
+    await m.reply(s("server_list_header"), reply_markup=keyboard)
 
 
 @Client.on_message(filters.command("add_server"))
@@ -169,7 +169,7 @@ async def add_server_command(c: Client, m: Message, s: Strings):
     try:
         args = re.findall(r"\[([^\]]+)\]", m.text)
 
-        if len(args) != 9:
+        if len(args) != 7:
             await m.reply(s("add_server_usage"))
             return
 
@@ -178,8 +178,6 @@ async def add_server_command(c: Client, m: Message, s: Strings):
             log_port = int(args[2].strip())
             oldengine = int(args[3].strip())
             topic_id = int(args[4].strip())
-            log_suicides = int(args[7].strip())
-            log_kills = int(args[8].strip())
         except ValueError:
             await m.reply(s("value_error"))
             return
@@ -198,8 +196,6 @@ async def add_server_command(c: Client, m: Message, s: Strings):
             "topic_id": topic_id,
             "connectionless_args": args[5].strip(),
             "rcon_password": args[6].strip(),
-            "log_suicides": log_suicides,
-            "log_kills": log_kills
         }
 
         if not (1 <= port <= 65535):
@@ -247,7 +243,7 @@ async def update_server_command(c: Client, m: Message, s: Strings):
                 key, value = arg.split("=", 1)
                 key = key.strip()
                 value = value.strip()
-                if key in ["port", "log_port", "oldengine", "topic_id", "log_suicides", "log_kills"]:
+                if key in ["port", "log_port", "oldengine", "topic_id"]:
                     try:
                         value = int(value)
                     except ValueError:
@@ -302,8 +298,6 @@ async def manage_server(c: Client, q: CallbackQuery, s: Strings):
         f"topic_id: {server['topic_id']}\n"
         f"connectionless_args: {server['connectionless_args']}\n"
         f"rcon_password: {server['rcon_password']}\n"
-        f"log_suicides: {server['log_suicides']}\n"
-        f"log_kills: {server['log_kills']}\n"
     )
 
     keyboard = InlineKeyboardMarkup([
@@ -340,8 +334,8 @@ async def confirm_remove_server(c: Client, q: CallbackQuery, s: Strings):
     msg = s("confirm_remove_server").format(name=server_name)
     keyboard = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(s("yes"), callback_data=f"confirm_remove_yes|{server_name}"),
-            InlineKeyboardButton(s("no"), callback_data=f"confirm_remove_no|{server_name}")
+            InlineKeyboardButton(s("yes_btn"), callback_data=f"confirm_remove_yes|{server_name}"),
+            InlineKeyboardButton(s("no_btn"), callback_data=f"confirm_remove_no|{server_name}")
         ]
     ])
     await safe_edit_message(q, msg, reply_markup=keyboard)
