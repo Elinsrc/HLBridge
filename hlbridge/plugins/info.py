@@ -44,7 +44,7 @@ async def status(c: Client, m: Message, s: Strings):
         return
 
     for server in servers:
-        protocol = 48 if server['oldengine'] == 1 else 49
+        protocol = server['protocol']
         button = InlineKeyboardButton(
             text=server['server_name'],
             callback_data=f"server_info|{server['port']}|{protocol}"

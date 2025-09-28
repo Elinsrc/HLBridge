@@ -132,7 +132,7 @@ class HLBridge(Client):
 
         sock = Socket()
         await sock.connect("0.0.0.0", server["log_port"])
-        log_prefix = "log L" if server["oldengine"] == 1 else "log"
+        log_prefix = "log L" if server["protocol"] == 49 else "log"
 
         task = asyncio.create_task(self.send_to_telegram(sock, log_prefix, server["topic_id"], server_name))
 

@@ -136,8 +136,7 @@ async def rcon_command(c: Client, m: Message, s: Strings):
         await m.reply(f"{s('rcon_not_allowed')}")
         return
 
-    protocol = 48 if server['oldengine'] == 1 else 49
-    hlserver = HLServer(ip="0.0.0.0", port=server["port"], protocol=protocol, timeout=0.5)
+    hlserver = HLServer(ip="0.0.0.0", port=server["port"], protocol=server['protocol'])
 
     result = await hlserver.rcon(server["rcon_password"], command_text)
     result = remove_color_tags(result)

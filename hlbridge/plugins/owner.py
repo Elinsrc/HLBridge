@@ -176,7 +176,7 @@ async def add_server_command(c: Client, m: Message, s: Strings):
         try:
             port = int(args[1].strip())
             log_port = int(args[2].strip())
-            oldengine = int(args[3].strip())
+            protocol = int(args[3].strip())
             topic_id = int(args[4].strip())
         except ValueError:
             await m.reply(s("value_error"))
@@ -192,7 +192,7 @@ async def add_server_command(c: Client, m: Message, s: Strings):
             "server_name": args[0].strip(),
             "port": port,
             "log_port": log_port,
-            "oldengine": oldengine,
+            "protocol": protocol,
             "topic_id": topic_id,
             "connectionless_args": args[5].strip(),
             "rcon_password": args[6].strip(),
@@ -243,7 +243,7 @@ async def update_server_command(c: Client, m: Message, s: Strings):
                 key, value = arg.split("=", 1)
                 key = key.strip()
                 value = value.strip()
-                if key in ["port", "log_port", "oldengine", "topic_id"]:
+                if key in ["port", "log_port", "protocol", "topic_id"]:
                     try:
                         value = int(value)
                     except ValueError:
@@ -294,7 +294,7 @@ async def manage_server(c: Client, q: CallbackQuery, s: Strings):
         f"{status_text}\n"
         f"port: {server['port']}\n"
         f"log_port: {server['log_port']}\n"
-        f"oldengine: {server['oldengine']}\n"
+        f"protocol: {server['protocol']}\n"
         f"topic_id: {server['topic_id']}\n"
         f"connectionless_args: {server['connectionless_args']}\n"
         f"rcon_password: {server['rcon_password']}\n"

@@ -38,7 +38,7 @@ class Database:
             server_name TEXT,
             port INTEGER,
             log_port INTEGER,
-            oldengine INTEGER DEFAULT 0,
+            protocol INTEGER,
             topic_id INTEGER,
             connectionless_args TEXT,
             rcon_password TEXT,
