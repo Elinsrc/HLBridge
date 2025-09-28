@@ -85,6 +85,7 @@ class HLBridge(Client):
                 l = remove_color_tags(l)
 
                 saymatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<[^>]+><(.*)><[^>]+>" say "(.*)"')
+                startedmapmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: Started map "(.*?)"')
                 # entermatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<[^>]+><(.*)><[^>]+>" entered the game')
                 # disconnectmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<[^>]+><(.*)><[^>]+>" disconnected')
                 # suicidematch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<[^>]+><(.*)><[^>]+>" committed suicide with "(.*)"')
@@ -92,11 +93,13 @@ class HLBridge(Client):
                 # killedmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<[^>]+><(.*)><[^>]+>" killed "(.*)<[^>]+><(.*)><[^>]+>" with "(.*)"')
                 # kickmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: Kick: "(.*)<[^>]+><(.*)><>" was kicked by "(.*)" \(message "(.*)"\)')
                 # changematch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<[^>]+><(.*)><[^>]+>" changed name to "(.*)"')
-                # startedmapmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: Started map "(.*?)"')
                 # connectedmatch = re.compile(fr'{log_prefix} \d\d\/\d\d\/\d\d\d\d - \d\d\:\d\d\:\d\d\: "(.*)<[^>]+><(.*)><>" connected, address "([^"]+)"')
 
-                # matches = [
-                #     (saymatch, lambda g: f'{g[0]}: {g[2]}'),
+                matches = [
+                    (saymatch, lambda g: f'{g[0]}: {g[2]}'),
+                    (startedmapmatch, lambda g: f'Started map "{g[0]}"')
+                ]
+
                 #     (suicidematch, lambda g: f'"{g[0]}" committed suicide with "{g[2]}"'),
                 #     (waskilledmatch, lambda g: f'"{g[0]}" committed suicide with "{g[2]}"'),
                 #     (killedmatch, lambda g: f'"{g[0]}" killed "{g[2]}" with "{g[4]}"',
@@ -104,26 +107,17 @@ class HLBridge(Client):
                 #     (changematch, lambda g: f'Player "{g[0]}" changed name to: "{g[2]}"'),
                 #     (entermatch, lambda g: f'Player "{g[0]}" has joined the game'),
                 #     (disconnectmatch, lambda g: f'Player "{g[0]}" has left the game'),
-                #     (startedmapmatch, lambda g: f'Started map "{g[0]}"'),
                 #     (connectedmatch, lambda g: f'Player "{g[0]}" connected')
-                # ]
 
-                # for pattern, formatter in matches:
-                #     m = pattern.match(l)
-                #     if m:
-                #         g = m.groups()
-                #         text = formatter(g)
-                #         if text:  # Only send message if formatting function returned a valid text
-                #             await self.send_message(chat_id=self.chat_id, text=text, message_thread_id=topic_id, disable_web_page_preview=True, disable_notification=True)
-                #             logger.info(f"[{server_name}] <<< {text} >>>")
+                for pattern, formatter in matches:
+                    m = pattern.match(l)
+                    if m:
+                        g = m.groups()
+                        text = formatter(g)
+                        if text:  # Only send message if formatting function returned a valid text
+                            await self.send_message(chat_id=self.chat_id, text=text, message_thread_id=topic_id, disable_web_page_preview=True, disable_notification=True)
+                            logger.info(f"[{server_name}] <<< {text} >>>")
 
-
-                m = saymatch.match(l)
-                if m:
-                    g = m.groups()
-                    text = f'{g[0]}: {g[2]}'
-                    await self.send_message(chat_id=self.chat_id, text=text, message_thread_id=topic_id, disable_web_page_preview=True, disable_notification=True)
-                    logger.info(f"[{server_name}] <<< {text} >>>")
 
     async def start_server_monitoring(self, server: Dict) -> bool:
         server_name = server["server_name"]
