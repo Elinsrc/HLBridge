@@ -44,10 +44,9 @@ async def status(c: Client, m: Message, s: Strings):
         return
 
     for server in servers:
-        protocol = server['protocol']
         button = InlineKeyboardButton(
             text=server['server_name'],
-            callback_data=f"server_info|{server['port']}|{protocol}"
+            callback_data=f"server_info|{server['port']}|{server['protocol']}"
         )
         keyboard.append([button])
 
