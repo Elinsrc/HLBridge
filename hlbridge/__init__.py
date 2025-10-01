@@ -3,7 +3,6 @@
 
 import asyncio
 import re
-import time
 from typing import Dict, List, Optional
 
 from loguru import logger
@@ -52,8 +51,6 @@ class HLBridge(Client):
         from .database.settings import get_settings
         from .database.servers import get_servers
         await super().start()
-
-        self.start_time = time.time()
 
         logger.info(f"HLBridge running with Hydrogram v{hydrogram.__version__} (Layer {layer}) started on @{self.me.username}.")
 
@@ -125,14 +122,16 @@ class HLBridge(Client):
             await self.stop_server_monitoring(server_name)
 
         sock = Socket()
-        await sock.connect("0.0.0.0", server["log_port"])
+        await sock.connect("127.0.0.1", server["log_port"])
         log_prefix = "log" if server["protocol"] == 49 else "log L"
 
         task = asyncio.create_task(self.send_to_telegram(sock, log_prefix, server["topic_id"], server_name))
 
         self.server_tasks[server_name] = task
         self.server_sockets[server_name] = sock
+
         return True
+
 
     async def stop_server_monitoring(self, server_name: str) -> bool:
         if server_name in self.server_tasks:
@@ -144,6 +143,7 @@ class HLBridge(Client):
             await sock.close()
 
         return True
+
 
     async def restart_monitoring(self, servers: Optional[List[Dict]] = None):
         if servers is None:

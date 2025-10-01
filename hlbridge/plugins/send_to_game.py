@@ -26,5 +26,5 @@ async def send_to_hl(c: Client, m: Message):
         msg = f"(telegram) {user_name}: {m.text}"
         query = b'\xff\xff\xff\xff%b%b\n' % (connectionless_args.encode(), msg.encode("utf8"))
 
-        await Socket().send_msg("0.0.0.0", server_port, query)
+        await Socket().send_msg("127.0.0.1", server_port, query)
         logger.info(f"[{server_name}] Telegram: <<< {user_name}: {m.text} >>>")

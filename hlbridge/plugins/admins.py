@@ -126,9 +126,9 @@ async def rcon_command(c: Client, m: Message, s: Strings):
 
     command_text = args[1].strip()
 
-    servers = await get_servers()
+    servers = await get_servers(active_only=True)
     server = next(
-        (srv for srv in servers if srv["topic_id"] == m.message_thread_id and srv["is_active"]),
+        (srv for srv in servers if srv["topic_id"] == m.message_thread_id),
         None
     )
 
@@ -136,14 +136,14 @@ async def rcon_command(c: Client, m: Message, s: Strings):
         await m.reply(f"{s('rcon_not_allowed')}")
         return
 
-    hlserver = HLServer(ip="0.0.0.0", port=server["port"], protocol=server['protocol'])
+    hlserver = HLServer(ip="127.0.0.1", port=server["port"], protocol=server['protocol'])
 
     result = await hlserver.rcon(server["rcon_password"], command_text)
     result = remove_color_tags(result)
 
-    if not result.strip():
-        await m.reply(s("rcon_no_response"))
-        return
+    # if not result.strip():
+    #     await m.reply(s("rcon_no_response"))
+    #     return
 
     if len(result) < 3500:
         await m.reply(f"<code>{result}</code>")

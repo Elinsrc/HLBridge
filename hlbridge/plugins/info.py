@@ -59,7 +59,7 @@ async def status(c: Client, m: Message, s: Strings):
 async def server_info(c: Client, m: CallbackQuery, s: Strings):
     _, port, protocol = m.data.split("|")
 
-    status = HLServer("0.0.0.0", int(port), int(protocol))
+    status = HLServer("127.0.0.1", int(port), int(protocol))
     server_info = '\n'.join(await status.get_server_info())
     player_list = '\n'.join(await status.get_players())
 
