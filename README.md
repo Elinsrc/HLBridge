@@ -4,7 +4,7 @@
 
 # Building server and setting it up
 
-First you need to build metamod plugin, depending on your platform, from source [HLBridge_metamod](https://github.com/Half-Life-Collective/HLBridge_metamod)
+First you need to build metamod plugin, depending on your platform, from source [HLBridge_metamod](https://github.com/Elinsrc/HLBridge_metamod)
 
 After building **hlbridge_mm_i386.so** or **hlbridge_mm_i386.dll**, move it to **gamedir**/dlls/addons/metamod
 
