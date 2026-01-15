@@ -182,14 +182,18 @@ async def add_server_command(c: Client, m: Message, s: Strings):
             await m.reply(s("value_error"))
             return
 
+        server_name = args[0].strip()
         servers_list = await get_servers()
         for srv in servers_list:
+            if srv["server_name"] == server_name:
+                await m.reply(s("server_name_already_used").format(name=server_name))
+                return
             if srv["topic_id"] == topic_id:
                 await m.reply(s("topic_id_already_used").format(topic_id=topic_id))
                 return
 
         server = {
-            "server_name": args[0].strip(),
+            "server_name": server_name,
             "port": port,
             "log_port": log_port,
             "protocol": protocol,

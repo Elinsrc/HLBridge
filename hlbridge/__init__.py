@@ -146,19 +146,20 @@ class HLBridge(Client):
 
 
     async def restart_monitoring(self, servers: Optional[List[Dict]] = None):
+        from .database.servers import get_servers
         if servers is None:
             servers = await get_servers(active_only=True)
 
-        stopped_count = 0
-        started_count = 0
-
         for name in list(self.server_tasks.keys()):
-            if await self.stop_server_monitoring(name):
-                stopped_count += 1
+            await self.stop_server_monitoring(name)
 
+        started_count = 0
         for server in servers:
             if await self.start_server_monitoring(server):
                 started_count += 1
+
+        all_servers = await get_servers(active_only=False)
+        stopped_count = len(all_servers) - started_count
 
         return stopped_count, started_count
 
